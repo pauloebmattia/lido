@@ -23,12 +23,34 @@ export default async function HomePage() {
     user = profile;
   }
 
-  // Buscar livros em alta (por enquanto, os 4 primeiros recentes)
-  const { data: books } = await supabase
+  // Buscar livros em alta (curadoria manual + recentes)
+  const targetTitles = [
+    'A Biblioteca da Meia-Noite',
+    'Torto Arado',
+    'O Conto da Aia',
+    'Pequeno Manual Antirracista'
+  ];
+
+  const { data: curatedBooks } = await supabase
     .from('books')
     .select('*')
-    .limit(4)
-    .order('created_at', { ascending: false });
+    .in('title', targetTitles);
+
+  let books = curatedBooks || [];
+
+  // Se faltar livro, completa com os mais recentes
+  if (books.length < 4) {
+    const { data: recentBooks } = await supabase
+      .from('books')
+      .select('*')
+      .not('id', 'in', `(${books.map(b => b.id).join(',')})`) // Exclude already fetched
+      .limit(4 - books.length)
+      .order('created_at', { ascending: false });
+
+    if (recentBooks) {
+      books = [...books, ...recentBooks];
+    }
+  }
 
   const trendingBooks: Book[] = books || [];
 
