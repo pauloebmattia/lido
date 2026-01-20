@@ -1,0 +1,279 @@
+'use client';
+
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { ArrowLeft, Star, BookOpen, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { NavBar } from '@/components/NavBar';
+import { VibeBadge, VibePickerOption, DEFAULT_VIBES } from '@/components/VibeBadge';
+import { Button } from '@/components/ui/Button';
+import type { CleanBookData } from '@/lib/google-books';
+import type { Vibe } from '@/lib/supabase/types';
+
+function AddBookContent() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const googleId = searchParams.get('google_id');
+
+    const [book, setBook] = useState<CleanBookData | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    // Review state
+    const [rating, setRating] = useState(0);
+    const [hoverRating, setHoverRating] = useState(0);
+    const [selectedVibes, setSelectedVibes] = useState<Vibe[]>([]);
+    const [reviewContent, setReviewContent] = useState('');
+    const [readingStatus, setReadingStatus] = useState<string>('want-to-read');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Fetch book data
+    useEffect(() => {
+        if (!googleId) {
+            setError('ID do livro não encontrado');
+            setIsLoading(false);
+            return;
+        }
+
+        const fetchBook = async () => {
+            try {
+                const response = await fetch(`/api/books/${googleId}`);
+                if (!response.ok) {
+                    throw new Error('Livro não encontrado');
+                }
+                const data = await response.json();
+                setBook(data.book);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Erro ao carregar livro');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchBook();
+    }, [googleId]);
+
+    const handleVibeToggle = (vibe: Vibe) => {
+        setSelectedVibes((prev) => {
+            if (prev.find((v) => v.id === vibe.id)) {
+                return prev.filter((v) => v.id !== vibe.id);
+            }
+            if (prev.length >= 3) return prev;
+            return [...prev, vibe];
+        });
+    };
+
+    const handleSubmit = async () => {
+        if (!book) return;
+
+        setIsSubmitting(true);
+
+        try {
+            // Here you would:
+            // 1. Add book to database
+            // 2. Set reading status
+            // 3. Optionally submit review
+
+            // For now, simulate success and redirect
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            router.push('/my-books');
+        } catch (err) {
+            setError('Erro ao adicionar livro');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-paper flex items-center justify-center">
+                <Loader2 className="animate-spin text-accent" size={48} />
+            </div>
+        );
+    }
+
+    if (error || !book) {
+        return (
+            <div className="min-h-screen bg-paper">
+                <NavBar />
+                <main className="pt-20 pb-16">
+                    <div className="max-w-2xl mx-auto px-4 text-center py-16">
+                        <p className="text-fade text-lg">{error || 'Livro não encontrado'}</p>
+                        <Link href="/books">
+                            <Button variant="ghost" className="mt-4">
+                                <ArrowLeft size={18} className="mr-2" />
+                                Voltar para explorar
+                            </Button>
+                        </Link>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-paper">
+            <NavBar />
+
+            <main className="pt-20 pb-16">
+                <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+                    {/* Back Link */}
+                    <Link
+                        href="/books"
+                        className="inline-flex items-center gap-2 text-fade hover:text-ink transition-colors py-4"
+                    >
+                        <ArrowLeft size={18} />
+                        <span>Voltar</span>
+                    </Link>
+
+                    {/* Book Info */}
+                    <div className="card p-6 mt-4">
+                        <div className="flex gap-6">
+                            {book.cover_url && (
+                                <img
+                                    src={book.cover_url}
+                                    alt={book.title}
+                                    className="w-32 h-auto rounded-xl shadow-lg flex-shrink-0"
+                                />
+                            )}
+                            <div>
+                                <h1 className="font-serif text-2xl sm:text-3xl font-bold text-ink">
+                                    {book.title}
+                                </h1>
+                                <p className="text-lg text-fade mt-1">
+                                    {book.authors.join(', ')}
+                                </p>
+                                <div className="flex flex-wrap gap-4 mt-4 text-sm text-fade">
+                                    {book.publisher && (
+                                        <span>{book.publisher}</span>
+                                    )}
+                                    {book.published_date && (
+                                        <span>{book.published_date.substring(0, 4)}</span>
+                                    )}
+                                    {book.page_count && (
+                                        <span className="flex items-center gap-1">
+                                            <BookOpen size={14} />
+                                            {book.page_count} páginas
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Reading Status */}
+                    <div className="card p-6 mt-6">
+                        <h2 className="font-serif text-xl font-semibold text-ink mb-4">
+                            Status de Leitura
+                        </h2>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            {[
+                                { value: 'want-to-read', label: 'Quero Ler' },
+                                { value: 'reading', label: 'Lendo' },
+                                { value: 'read', label: 'Lido' },
+                                { value: 'dnf', label: 'Abandonei' },
+                            ].map((option) => (
+                                <button
+                                    key={option.value}
+                                    onClick={() => setReadingStatus(option.value)}
+                                    className={`p-3 rounded-xl border-2 transition-all text-center ${readingStatus === option.value
+                                            ? 'border-accent bg-accent/5 text-accent font-medium'
+                                            : 'border-stone-200 text-fade hover:border-stone-300'
+                                        }`}
+                                >
+                                    {option.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Rating (optional) */}
+                    <div className="card p-6 mt-6">
+                        <h2 className="font-serif text-xl font-semibold text-ink mb-4">
+                            Sua Avaliação <span className="text-fade font-normal text-base">(opcional)</span>
+                        </h2>
+
+                        {/* Stars */}
+                        <div className="flex items-center gap-2 mb-6">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                    key={star}
+                                    onClick={() => setRating(star)}
+                                    onMouseEnter={() => setHoverRating(star)}
+                                    onMouseLeave={() => setHoverRating(0)}
+                                    className="p-1 transition-transform hover:scale-110"
+                                >
+                                    <Star
+                                        size={36}
+                                        className={
+                                            star <= (hoverRating || rating)
+                                                ? 'text-yellow-500 fill-yellow-500'
+                                                : 'text-stone-300'
+                                        }
+                                    />
+                                </button>
+                            ))}
+                            <span className="ml-4 text-2xl font-serif font-bold text-ink">
+                                {rating > 0 ? rating : '-'}
+                            </span>
+                        </div>
+
+                        {/* Vibes */}
+                        <div className="mb-6">
+                            <div className="flex items-center justify-between mb-3">
+                                <label className="text-sm font-medium text-ink">Vibes do livro</label>
+                                <span className="text-xs text-fade">{selectedVibes.length}/3</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {DEFAULT_VIBES.map((vibe) => (
+                                    <VibePickerOption
+                                        key={vibe.id}
+                                        vibe={vibe}
+                                        selected={selectedVibes.some((v) => v.id === vibe.id)}
+                                        onToggle={handleVibeToggle}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Review Text */}
+                        <div>
+                            <label className="block text-sm font-medium text-ink mb-2">
+                                Sua review
+                            </label>
+                            <textarea
+                                value={reviewContent}
+                                onChange={(e) => setReviewContent(e.target.value)}
+                                placeholder="O que você achou deste livro?"
+                                rows={4}
+                                className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white text-ink placeholder:text-fade focus:outline-none focus:border-accent resize-none"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Submit */}
+                    <div className="mt-8 flex justify-end gap-4">
+                        <Link href="/books">
+                            <Button variant="ghost">Cancelar</Button>
+                        </Link>
+                        <Button onClick={handleSubmit} isLoading={isSubmitting}>
+                            Adicionar Livro
+                        </Button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+}
+
+export default function AddBookPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-paper flex items-center justify-center">
+                <Loader2 className="animate-spin text-accent" size={48} />
+            </div>
+        }>
+            <AddBookContent />
+        </Suspense>
+    );
+}

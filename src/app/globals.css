@@ -1,26 +1,444 @@
+/* Google Fonts - Must be first */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ================================================
+   LIDO - Design System "Libris Paper & Ink"
+   ================================================ */
 
+/* Theme Variables - Tailwind 4 */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* ===== Colors: Libris Paper & Ink ===== */
+  --color-paper: #FAFAF9;
+  /* stone-50 - Main background */
+  --color-surface: #FFFFFF;
+  /* White - Cards */
+  --color-ink: #1C1917;
+  /* stone-900 - Primary text */
+  --color-fade: #78716C;
+  /* stone-500 - Secondary text */
+  --color-accent: #0F766E;
+  /* teal-700 - Brand accent */
+  --color-accent-light: #14B8A6;
+  /* teal-500 - Hover states */
+
+  /* Vibe Tag Colors (Pastel) */
+  --color-vibe-tensao: #FCA5A5;
+  /* red-300 */
+  --color-vibe-choro: #93C5FD;
+  /* blue-300 */
+  --color-vibe-leve: #F9A8D4;
+  /* pink-300 */
+  --color-vibe-plottwist: #FDBA74;
+  /* orange-300 */
+  --color-vibe-sombrio: #C4B5FD;
+  /* violet-300 */
+  --color-vibe-inspirador: #FDE047;
+  /* yellow-300 */
+
+  /* ===== Typography ===== */
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+
+  /* ===== Spacing & Sizing ===== */
+  --radius-card: 1rem;
+  /* 16px - rounded-2xl */
+  --radius-pill: 9999px;
+  /* Full rounded for buttons */
+
+  /* ===== Shadows ===== */
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-card-hover: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+
+  /* ===== Glass Effect ===== */
+  --glass-bg: rgba(255, 255, 255, 0.8);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ================================================
+   Base Styles
+   ================================================ */
+:root {
+  --background: var(--color-paper);
+  --foreground: var(--color-ink);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+}
+
+/* Typography Classes */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.heading {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-ink);
+}
+
+/* ================================================
+   Component Utilities
+   ================================================ */
+
+/* Glassmorphism Navbar */
+.glass-nav {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Button Styles */
+.btn-ink {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  border-radius: var(--radius-pill);
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-ink:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-ink);
+  border: 1px solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-ghost:hover {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+
+/* Card Styles */
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Vibe Tag Pills */
+.vibe-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.vibe-tensao {
+  background: var(--color-vibe-tensao);
+  color: #7F1D1D;
+}
+
+.vibe-choro {
+  background: var(--color-vibe-choro);
+  color: #1E3A8A;
+}
+
+.vibe-leve {
+  background: var(--color-vibe-leve);
+  color: #831843;
+}
+
+.vibe-plottwist {
+  background: var(--color-vibe-plottwist);
+  color: #7C2D12;
+}
+
+.vibe-sombrio {
+  background: var(--color-vibe-sombrio);
+  color: #4C1D95;
+}
+
+.vibe-inspirador {
+  background: var(--color-vibe-inspirador);
+  color: #713F12;
+}
+
+/* Link Accent */
+a.accent-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a.accent-link:hover {
+  color: var(--color-accent-light);
+}
+
+/* Focus States */
+*:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ================================================
+   Scrollbar Styling
+   ================================================ */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-paper);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-fade);
+  border-radius: var(--radius-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ink);
+}
+
+/* ================================================
+   Premium Animations & Micro-interactions
+   ================================================ */
+
+/* Fade In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Stagger children fade in */
+.stagger-children>* {
+  opacity: 0;
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.stagger-children>*:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.stagger-children>*:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.stagger-children>*:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+.stagger-children>*:nth-child(4) {
+  animation-delay: 0.2s;
+}
+
+.stagger-children>*:nth-child(5) {
+  animation-delay: 0.25s;
+}
+
+.stagger-children>*:nth-child(6) {
+  animation-delay: 0.3s;
+}
+
+/* Pulse loading animation */
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-paper) 25%, #e7e5e4 50%, var(--color-paper) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.5rem;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Book cover hover effect */
+.book-cover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+
+.book-cover:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+/* Interactive card with gradient border */
+.card-premium {
+  position: relative;
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.card-premium::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, transparent 40%, var(--color-accent) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card-premium:hover::before {
+  opacity: 1;
+}
+
+/* Star rating animation */
+.star-interactive {
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.star-interactive:hover {
+  transform: scale(1.2);
+}
+
+/* Button with shimmer effect */
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-shimmer:hover::after {
+  left: 100%;
+}
+
+/* Gradient text for headings */
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-ink) 0%, var(--color-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Floating action button */
+.fab {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.4);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(15, 118, 110, 0.5);
+}
+
+/* Hero gradient background */
+.hero-gradient {
+  background: linear-gradient(180deg,
+      var(--color-paper) 0%,
+      rgba(15, 118, 110, 0.05) 50%,
+      var(--color-paper) 100%);
+}
+
+/* Page transition wrapper */
+.page-transition {
+  opacity: 0;
+  animation: fadeIn 0.3s ease-out 0.1s forwards;
+}
+
+/* Input focus glow */
+input:focus,
+textarea:focus {
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+}
+
+/* Toast notification */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--color-ink);
+  color: var(--color-paper);
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
