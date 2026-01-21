@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { Play, Loader2, CheckCircle, Globe2 } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import { Play, Loader2, CheckCircle, Globe2, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import { NavBar } from '@/components/NavBar';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
 export default function SeedExpansionPage() {
     const [isRunning, setIsRunning] = useState(false);
@@ -13,6 +15,44 @@ export default function SeedExpansionPage() {
     const [logs, setLogs] = useState<string[]>([]);
     const [isComplete, setIsComplete] = useState(false);
     const [isVibesRunning, setIsVibesRunning] = useState(false);
+    const [isLoadingUser, setIsLoadingUser] = useState(true);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+        async function checkAdmin() {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) {
+                router.push('/login');
+                return;
+            }
+
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', user.id)
+                .single();
+
+            if (profile?.role === 'admin') {
+                setIsAdmin(true);
+            }
+            setIsLoadingUser(false);
+        }
+        checkAdmin();
+    }, [router]);
+
+    if (isLoadingUser) return <div className="min-h-screen bg-stone-900 flex items-center justify-center text-stone-500">Verificando permissões...</div>;
+
+    if (!isAdmin) return (
+        <div className="min-h-screen bg-stone-900 flex flex-col items-center justify-center text-stone-400 gap-4">
+            <Lock size={48} className="text-red-500" />
+            <h1 className="text-2xl font-bold text-white">Acesso Restrito</h1>
+            <p>Esta área é exclusiva para administradores.</p>
+            <Link href="/" className="text-purple-400 hover:underline">Voltar para Home</Link>
+        </div>
+    );
 
     const runVibes = async () => {
         setIsVibesRunning(true);

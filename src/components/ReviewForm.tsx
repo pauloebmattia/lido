@@ -111,7 +111,7 @@ export function ReviewForm({
                 <label className="block font-medium text-ink mb-2">
                     Que vibes esse livro passa? <span className="text-fade font-normal">(até 3)</span>
                 </label>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-3">
                     {availableVibes.map((vibe) => (
                         <VibePickerOption
                             key={vibe.id}

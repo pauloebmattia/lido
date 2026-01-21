@@ -113,7 +113,8 @@ export function BookDetailClient({ id }: { id: string }) {
                     .from('reviews')
                     .select(`
                         id, user_id, rating, content, created_at, likes_count, comments_count,
-                        user:profiles!user_id(id, username, display_name, avatar_url)
+                        user:profiles!user_id(id, username, display_name, avatar_url),
+                        vibes:vibes(*)
                     `)
                     .eq('book_id', id)
                     .order('created_at', { ascending: false });
@@ -313,7 +314,7 @@ export function BookDetailClient({ id }: { id: string }) {
                             )}
 
                             {/* Admin Edit Cover (Quick Fix) */}
-                            {user && (
+                            {user && user.role === 'admin' && (
                                 <button
                                     className="absolute top-2 right-2 bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black"
                                     onClick={async () => {
