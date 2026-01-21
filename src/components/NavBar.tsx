@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, Menu, X, User, Bell, BookPlus } from 'lucide-react';
+import { Search, Menu, X, User, Bell, BookPlus, LogOut, Settings } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { SearchModal } from '@/components/SearchModal';
 import { Button } from '@/components/ui/Button';
 import { NotificationBell } from '@/components/NotificationBell';
+import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/lib/supabase/types';
 import type { CleanBookData } from '@/lib/google-books';
 
@@ -19,6 +20,14 @@ export function NavBar({ user }: NavBarProps) {
     const router = useRouter();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
+    const [profileOpen, setProfileOpen] = useState(false);
+    const supabase = createClient();
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        router.refresh();
+        router.push('/');
+    };
 
     const handleSelectBook = (book: CleanBookData) => {
         setSearchOpen(false);
@@ -73,21 +82,63 @@ export function NavBar({ user }: NavBarProps) {
                                     {/* Notifications */}
                                     <NotificationBell />
 
-                                    {/* User Avatar */}
-                                    <Link href={`/profile/${user.username}`} className="ml-2">
-                                        {user.avatar_url ? (
-                                            <img
-                                                src={user.avatar_url}
-                                                alt={user.display_name || user.username}
-                                                className="w-9 h-9 rounded-full object-cover ring-2 ring-stone-200"
-                                                referrerPolicy="no-referrer"
-                                            />
-                                        ) : (
-                                            <div className="w-9 h-9 rounded-full bg-ink text-paper flex items-center justify-center text-sm font-medium">
-                                                {(user.display_name || user.username).charAt(0).toUpperCase()}
-                                            </div>
+                                    {/* User Avatar Dropdown */}
+                                    <div className="relative ml-2">
+                                        <button
+                                            onClick={() => setProfileOpen(!profileOpen)}
+                                            className="block outline-none"
+                                        >
+                                            {user.avatar_url ? (
+                                                <img
+                                                    src={user.avatar_url}
+                                                    alt={user.display_name || user.username}
+                                                    className="w-9 h-9 rounded-full object-cover ring-2 ring-stone-200 hover:ring-accent transition-all"
+                                                    referrerPolicy="no-referrer"
+                                                />
+                                            ) : (
+                                                <div className="w-9 h-9 rounded-full bg-ink text-paper flex items-center justify-center text-sm font-medium hover:bg-zinc-800 transition-colors">
+                                                    {(user.display_name || user.username).charAt(0).toUpperCase()}
+                                                </div>
+                                            )}
+                                        </button>
+
+                                        {/* Dropdown Menu */}
+                                        {profileOpen && (
+                                            <>
+                                                <div
+                                                    className="fixed inset-0 z-30"
+                                                    onClick={() => setProfileOpen(false)}
+                                                />
+                                                <div className="absolute right-0 mt-2 w-48 bg-paper rounded-xl shadow-xl border border-stone-200 py-1 z-40 animate-fade-in-up">
+                                                    <div className="px-4 py-3 border-b border-stone-100">
+                                                        <p className="text-sm font-medium text-ink truncate">
+                                                            {user.display_name || user.username}
+                                                        </p>
+                                                        <p className="text-xs text-fade truncate">
+                                                            @{user.username}
+                                                        </p>
+                                                    </div>
+
+                                                    <Link
+                                                        href={`/profile/${user.username}`}
+                                                        className="flex items-center gap-2 px-4 py-2text-sm text-ink hover:bg-stone-50 transition-colors"
+                                                        onClick={() => setProfileOpen(false)}
+                                                    >
+                                                        <User size={16} className="text-fade" />
+                                                        <span className="text-sm">Meu Perfil</span>
+                                                    </Link>
+
+                                                    <button
+                                                        onClick={handleLogout}
+                                                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                                    >
+                                                        <LogOut size={16} />
+                                                        <span>Sair</span>
+                                                    </button>
+                                                </div>
+                                            </>
                                         )}
-                                    </Link>
+                                    </div>
                                 </>
                             ) : (
                                 <>
@@ -125,13 +176,31 @@ export function NavBar({ user }: NavBarProps) {
                                     Explorar
                                 </Link>
                                 {user && (
-                                    <Link
-                                        href="/my-books"
-                                        className="px-4 py-2 text-fade hover:text-ink transition-colors"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        Meus Livros
-                                    </Link>
+                                    <>
+                                        <Link
+                                            href={`/profile/${user.username}`}
+                                            className="px-4 py-2 text-fade hover:text-ink transition-colors"
+                                            onClick={() => setMobileMenuOpen(false)}
+                                        >
+                                            Meu Perfil
+                                        </Link>
+                                        <Link
+                                            href="/my-books"
+                                            className="px-4 py-2 text-fade hover:text-ink transition-colors"
+                                            onClick={() => setMobileMenuOpen(false)}
+                                        >
+                                            Meus Livros
+                                        </Link>
+                                        <button
+                                            onClick={() => {
+                                                handleLogout();
+                                                setMobileMenuOpen(false);
+                                            }}
+                                            className="px-4 py-2 text-red-600 hover:bg-red-50 text-left transition-colors font-medium"
+                                        >
+                                            Sair da conta
+                                        </button>
+                                    </>
                                 )}
                                 {!user && (
                                     <Link

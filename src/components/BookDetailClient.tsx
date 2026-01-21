@@ -127,24 +127,39 @@ export function BookDetailClient({ id }: { id: string }) {
     }, [id, supabase]);
 
     // Handle adding book to list
-    const handleAddToList = async (status: ReadingStatus) => {
+    const handleAddToList = async (status: ReadingStatus | null) => {
         if (!book) return;
 
         try {
-            const response = await fetch('/api/user-books', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ book_id: book.id, status }),
-            });
+            if (status === null) {
+                // Remove from list
+                const response = await fetch(`/api/user-books?book_id=${book.id}`, {
+                    method: 'DELETE',
+                });
 
-            if (response.ok) {
-                setCurrentStatus(status);
+                if (response.ok) {
+                    setCurrentStatus(null);
+                } else {
+                    const data = await response.json();
+                    console.error('Error removing from list:', data.error);
+                }
             } else {
-                const data = await response.json();
-                console.error('Error:', data.error);
+                // Add/Update list
+                const response = await fetch('/api/user-books', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ book_id: book.id, status }),
+                });
+
+                if (response.ok) {
+                    setCurrentStatus(status);
+                } else {
+                    const data = await response.json();
+                    console.error('Error:', data.error);
+                }
             }
         } catch (error) {
-            console.error('Error adding to list:', error);
+            console.error('Error updating status:', error);
         }
     };
 

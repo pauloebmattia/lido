@@ -24,8 +24,22 @@ async function searchGoogleCover(title: string, author?: string): Promise<string
         if (data.items && data.items[0]?.volumeInfo?.imageLinks) {
             // Prefer extraLarge, large, medium, small, thumbnail
             const links = data.items[0].volumeInfo.imageLinks;
-            const url = links.extraLarge || links.large || links.medium || links.thumbnail || links.smallThumbnail;
-            return url ? url.replace('http:', 'https:') : null;
+            let url = links.extraLarge || links.large || links.medium || links.thumbnail || links.smallThumbnail;
+
+            if (url) {
+                // FORCE HIGH RES: Replace zoom=1 with zoom=2 or zoom=3
+                // Also ensure https
+                url = url.replace('http:', 'https:');
+
+                // Hack to try to get better resolution if it's a standard Google Books URL
+                if (url.includes('&zoom=1')) {
+                    url = url.replace('&zoom=1', '&zoom=2');
+                }
+                // Determine if we can strip edge=curl for cleaner look
+                url = url.replace('&edge=curl', '');
+
+                return url;
+            }
         }
     } catch (e) {
         console.error(`Error searching Google for ${title}:`, e);

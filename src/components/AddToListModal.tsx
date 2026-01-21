@@ -12,7 +12,7 @@ interface AddToListModalProps {
     onClose: () => void;
     book: Book;
     currentStatus?: ReadingStatus | null;
-    onSave: (status: ReadingStatus) => Promise<void>;
+    onSave: (status: ReadingStatus | null) => Promise<void>;
 }
 
 const STATUS_OPTIONS: { value: ReadingStatus; label: string; icon: React.ElementType; color: string }[] = [
@@ -27,8 +27,6 @@ export function AddToListModal({ isOpen, onClose, book, currentStatus, onSave }:
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSave = async () => {
-        if (!selectedStatus) return;
-
         setIsSubmitting(true);
         try {
             await onSave(selectedStatus);
@@ -93,7 +91,14 @@ export function AddToListModal({ isOpen, onClose, book, currentStatus, onSave }:
                         return (
                             <button
                                 key={option.value}
-                                onClick={() => setSelectedStatus(option.value)}
+                                onClick={() => {
+                                    // Toggle: if already selected, deselect (remove)
+                                    if (selectedStatus === option.value) {
+                                        setSelectedStatus(null);
+                                    } else {
+                                        setSelectedStatus(option.value);
+                                    }
+                                }}
                                 className={`
                   w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all
                   ${isSelected
