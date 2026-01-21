@@ -127,6 +127,31 @@ export async function POST(request: Request) {
         finished_at: new Date().toISOString(),
     }, { onConflict: 'user_id,book_id' });
 
+    // Award XP for the review
+    try {
+        // Check if book is an indie/published book (bonus XP)
+        const { data: indieBook } = await supabase
+            .from('published_books')
+            .select('id')
+            .eq('book_id', book_id)
+            .single();
+
+        const isIndie = !!indieBook;
+        const xpAmount = isIndie ? 25 : 10; // 25 XP for indie, 10 XP for regular
+        const eventType = isIndie ? 'indie_review' : 'review';
+
+        // Call the add_xp RPC function
+        await supabase.rpc('add_xp', {
+            p_user_id: user.id,
+            p_event_type: eventType,
+            p_xp: xpAmount,
+            p_book_id: book_id
+        });
+    } catch (xpError) {
+        // XP award failure should not fail the review creation
+        console.error('Failed to award XP:', xpError);
+    }
+
     return NextResponse.json({ success: true, data, created: true });
 }
 

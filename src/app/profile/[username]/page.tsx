@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import { BookOpen, Users, Star, Calendar, Settings, Grid, Loader2 } from 'lucide-react';
+import { BookOpen, Users, Star, Calendar, Settings, Grid, Loader2, UserPlus, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 import { NavBar } from '@/components/NavBar';
 import { BookCard } from '@/components/BookCard';
@@ -26,6 +26,8 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
     const [recentBooks, setRecentBooks] = useState<Book[]>([]);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [followLoading, setFollowLoading] = useState(false);
     const [supabase] = useState(() => createClient());
 
     const activeTab = 'books';
@@ -71,6 +73,15 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                         .filter((ub: any) => ub.book)
                         .map((ub: any) => ub.book as Book);
                     setRecentBooks(books);
+                }
+
+                // Check if current user is following this profile
+                if (authUser && authUser.id !== profileData.id) {
+                    const followRes = await fetch(`/api/follows?user_id=${profileData.id}`);
+                    if (followRes.ok) {
+                        const followData = await followRes.json();
+                        setIsFollowing(followData.isFollowing);
+                    }
                 }
             }
 
@@ -198,7 +209,37 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                                     </>
                                 ) : currentUser ? (
                                     <>
-                                        <Button size="sm">Seguir</Button>
+                                        <Button
+                                            size="sm"
+                                            variant={isFollowing ? 'ghost' : 'primary'}
+                                            disabled={followLoading}
+                                            onClick={async () => {
+                                                setFollowLoading(true);
+                                                try {
+                                                    if (isFollowing) {
+                                                        await fetch(`/api/follows?user_id=${profile.id}`, { method: 'DELETE' });
+                                                        setIsFollowing(false);
+                                                        setProfile(p => p ? { ...p, followers_count: p.followers_count - 1 } : p);
+                                                    } else {
+                                                        await fetch('/api/follows', {
+                                                            method: 'POST',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({ user_id: profile.id })
+                                                        });
+                                                        setIsFollowing(true);
+                                                        setProfile(p => p ? { ...p, followers_count: p.followers_count + 1 } : p);
+                                                    }
+                                                } finally {
+                                                    setFollowLoading(false);
+                                                }
+                                            }}
+                                        >
+                                            {isFollowing ? (
+                                                <><UserCheck size={18} className="mr-2" />Seguindo</>
+                                            ) : (
+                                                <><UserPlus size={18} className="mr-2" />Seguir</>
+                                            )}
+                                        </Button>
                                         <Button variant="ghost" size="sm">
                                             Mensagem
                                         </Button>

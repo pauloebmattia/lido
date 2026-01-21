@@ -23,36 +23,76 @@ export default async function HomePage() {
     user = profile;
   }
 
-  // Buscar livros em alta (curadoria manual + recentes)
-  const targetTitles = [
-    'A Biblioteca da Meia-Noite',
-    'Torto Arado',
-    'O Conto da Aia',
-    'Pequeno Manual Antirracista'
-  ];
+  // Buscar livros em alta (algoritmo dinâmico baseado em atividade recente)
+  // Score: reviews = 3pts, bookmarks = 1pt, lendo = 2pts (últimos 7 dias)
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const sevenDaysAgoISO = sevenDaysAgo.toISOString();
 
-  const { data: curatedBooks } = await supabase
-    .from('books')
-    .select('*')
-    .in('title', targetTitles);
+  // Get recent reviews (last 7 days)
+  const { data: recentReviews } = await supabase
+    .from('reviews')
+    .select('book_id')
+    .gte('created_at', sevenDaysAgoISO);
 
-  let books = curatedBooks || [];
+  // Get recent user_books activity (bookmarks and reading status)
+  const { data: recentUserBooks } = await supabase
+    .from('user_books')
+    .select('book_id, status')
+    .gte('updated_at', sevenDaysAgoISO);
 
-  // Se faltar livro, completa com os mais recentes
-  if (books.length < 4) {
-    const { data: recentBooks } = await supabase
+  // Calculate scores
+  const bookScores: Record<string, number> = {};
+
+  // Reviews = 3 points each
+  recentReviews?.forEach(r => {
+    bookScores[r.book_id] = (bookScores[r.book_id] || 0) + 3;
+  });
+
+  // User books: bookmark (quero_ler) = 1pt, reading (lendo) = 2pts
+  recentUserBooks?.forEach(ub => {
+    const points = ub.status === 'lendo' ? 2 : (ub.status === 'quero_ler' ? 1 : 0);
+    if (points > 0) {
+      bookScores[ub.book_id] = (bookScores[ub.book_id] || 0) + points;
+    }
+  });
+
+  // Sort by score and get top 4 book IDs
+  const sortedBookIds = Object.entries(bookScores)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 4)
+    .map(([id]) => id);
+
+  let trendingBooks: Book[] = [];
+
+  if (sortedBookIds.length > 0) {
+    const { data: scoredBooks } = await supabase
       .from('books')
       .select('*')
-      .not('id', 'in', `(${books.map(b => b.id).join(',')})`) // Exclude already fetched
-      .limit(4 - books.length)
-      .order('created_at', { ascending: false });
+      .in('id', sortedBookIds);
 
-    if (recentBooks) {
-      books = [...books, ...recentBooks];
+    if (scoredBooks) {
+      // Maintain score order
+      trendingBooks = sortedBookIds
+        .map(id => scoredBooks.find(b => b.id === id))
+        .filter((b): b is Book => b !== undefined);
     }
   }
 
-  const trendingBooks: Book[] = books || [];
+  // Fallback: if not enough trending, fill with recent books
+  if (trendingBooks.length < 4) {
+    const excludeIds = trendingBooks.map(b => b.id);
+    const { data: recentBooks } = await supabase
+      .from('books')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(4 - trendingBooks.length);
+
+    if (recentBooks) {
+      const filtered = recentBooks.filter(b => !excludeIds.includes(b.id));
+      trendingBooks = [...trendingBooks, ...filtered].slice(0, 4);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-paper">
