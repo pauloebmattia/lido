@@ -6,22 +6,24 @@ interface VibeBadgeProps {
     vibe: Vibe;
     size?: 'xs' | 'sm' | 'md';
     showEmoji?: boolean;
+    count?: number;
 }
-
 const sizeClasses = {
     xs: 'text-[10px] px-2 py-0.5',
     sm: 'text-xs px-2.5 py-1',
     md: 'text-sm px-3 py-1.5',
 };
 
-/**
- * VibeBadge - Pílula colorida para Vibe Tags
- */
-export function VibeBadge({ vibe, size = 'sm', showEmoji = true }: VibeBadgeProps) {
+export function VibeBadge({ vibe, size = 'sm', showEmoji = true, count }: VibeBadgeProps) {
     return (
-        <span className={`vibe-tag ${vibe.color} ${sizeClasses[size]}`}>
+        <span className={`vibe-tag ${vibe.color} ${sizeClasses[size]} flex items-center gap-1.5`}>
             {showEmoji && <span>{vibe.emoji}</span>}
             <span>{vibe.name}</span>
+            {count !== undefined && count > 0 && (
+                <span className="ml-1 bg-white/20 px-1.5 rounded-full text-[90%] font-medium">
+                    {count}
+                </span>
+            )}
         </span>
     );
 }

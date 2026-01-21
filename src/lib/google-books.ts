@@ -111,19 +111,29 @@ export function cleanBookData(book: GoogleBookResult): CleanBookData {
         || info.industryIdentifiers?.find(i => i.type === 'ISBN_10')?.identifier
         || null;
 
-    // Get best quality cover image
+    // Helper to clean Google Books URLs for better quality
+    const cleanUrl = (url: string | undefined | null) => {
+        if (!url) return null;
+        // Remove edge=curl (which adds a page curl effect) and zoom (which limits size)
+        // If we remove zoom entirely, we sometimes get the "full" image depending on the source
+        return url.replace('http:', 'https:')
+            .replace('&edge=curl', '')
+            .replace(/&zoom=\d/, ''); // Remove zoom param to try getting original
+    };
+
+    // Get best quality cover image from available links
     const imageLinks = info.imageLinks;
-    const coverUrl = imageLinks?.extraLarge
-        || imageLinks?.large
-        || imageLinks?.medium
-        || imageLinks?.small
-        || imageLinks?.thumbnail
+    const coverUrl = cleanUrl(imageLinks?.extraLarge)
+        || cleanUrl(imageLinks?.large)
+        || cleanUrl(imageLinks?.medium)
+        || cleanUrl(imageLinks?.small)
+        || cleanUrl(imageLinks?.thumbnail)
         || null;
 
-    // Higher quality thumbnail (replace zoom parameter)
-    const coverThumbnail = imageLinks?.thumbnail?.replace('zoom=1', 'zoom=2')
-        || coverUrl
-        || null;
+    // For thumbnail, we also want a decent size but maybe not huge
+    // keeping zoom=1 usually returns a very small 128px image. 
+    // replacing with zoom=0 sometimes gives full size.
+    const coverThumbnail = cleanUrl(imageLinks?.thumbnail) || coverUrl || null;
 
     return {
         google_books_id: book.id,

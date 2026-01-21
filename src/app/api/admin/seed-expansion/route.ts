@@ -43,13 +43,28 @@ export async function GET(request: Request) {
         // if (!book.description) return 'skipped_no_desc'; // Optional: user preferred "more info" but cover is critical
 
         // Check if exists
+        // Check if exists
         const { data: existing } = await supabase
             .from('books')
-            .select('id')
+            .select('id, cover_url')
             .eq('google_books_id', book.google_books_id)
             .maybeSingle();
 
-        if (existing) return 'skipped_exists';
+        if (existing) {
+            // UPDATE COVER logic: If new cover is likely better (or just update to be safe with new cleaning logic)
+            // We can just update the cover_url and cover_thumbnail
+            if (book.cover_url && book.cover_url !== existing.cover_url) {
+                await supabase
+                    .from('books')
+                    .update({
+                        cover_url: book.cover_url,
+                        cover_thumbnail: book.cover_thumbnail
+                    })
+                    .eq('id', existing.id);
+                return 'updated_cover';
+            }
+            return 'skipped_exists';
+        }
 
         // Insert
         let formattedDate: string | null = null;
@@ -101,6 +116,9 @@ export async function GET(request: Request) {
                     if (status === 'inserted') {
                         logs.push(`✅ Added: ${bestMatch.title}`);
                         insertedCount++;
+                    } else if (status === 'updated_cover') {
+                        logs.push(`✨ Updated Cover: ${bestMatch.title}`);
+                        insertedCount++; // Count as success
                     } else {
                         logs.push(`⏭️ Skipped (${status}): ${bestMatch.title}`);
                         skippedCount++;
@@ -121,6 +139,10 @@ export async function GET(request: Request) {
                 for (const book of results) {
                     const status = await processBook(book);
                     if (status === 'inserted') {
+                        authorAdded++;
+                        insertedCount++;
+                    } else if (status === 'updated_cover') {
+                        logs.push(`✨ Updated Cover: ${book.title}`);
                         authorAdded++;
                         insertedCount++;
                     } else if (status.startsWith('skipped')) {

@@ -257,8 +257,20 @@ export function BookDetailClient({ id }: { id: string }) {
         );
     }
 
-    // Top vibes for this book (mocked for now until we aggregate them/implement logic)
-    const topVibes = DEFAULT_VIBES.slice(0, 3);
+    // Aggregate vibes from reviews
+    const vibeCounts = reviews.reduce((acc, review) => {
+        if (review.vibes) {
+            review.vibes.forEach(vibe => {
+                acc[vibe.id] = (acc[vibe.id] || 0) + 1;
+            });
+        }
+        return acc;
+    }, {} as Record<string, number>);
+
+    const topVibes = DEFAULT_VIBES
+        .map(vibe => ({ ...vibe, count: vibeCounts[vibe.id] || 0 }))
+        .filter(vibe => vibe.count > 0)
+        .sort((a, b) => b.count - a.count);
 
     return (
         <div className="min-h-screen bg-paper">
@@ -323,7 +335,7 @@ export function BookDetailClient({ id }: { id: string }) {
 
                             <div className="mt-6 flex flex-wrap justify-center lg:justify-start gap-2">
                                 {topVibes.map((vibe) => (
-                                    <VibeBadge key={vibe.id} vibe={vibe} size="md" />
+                                    <VibeBadge key={vibe.id} vibe={vibe} size="md" count={vibe.count} />
                                 ))}
                             </div>
 
