@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import { Star, BookOpen, Users, Calendar, Bookmark, PenLine, Trash2, Edit3 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { NavBar } from '@/components/NavBar';
 import { FriendsActivity } from '@/components/FriendsActivity';
 import { VibeBadge, DEFAULT_VIBES } from '@/components/VibeBadge';
 import { Button } from '@/components/ui/Button';
 import { AddToListModal, ReadingStatus } from '@/components/AddToListModal';
 import { ReviewForm } from '@/components/ReviewForm';
+import { EditBookModal } from '@/components/EditBookModal';
 import { createClient } from '@/lib/supabase/client';
 import { translateCategory } from '@/lib/utils';
 import type { Book, Profile, Vibe } from '@/lib/supabase/types';
@@ -63,6 +65,8 @@ export function BookDetailClient({ id }: { id: string }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingReview, setEditingReview] = useState<ReviewWithUser | null>(null);
     const [availableVibes, setAvailableVibes] = useState<Vibe[]>(DEFAULT_VIBES);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         async function loadData() {
@@ -293,11 +297,7 @@ export function BookDetailClient({ id }: { id: string }) {
                 <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* ... (Hero content omitted, unchanged) */}
 
-                    {/* Re-insert the rest of the file content conceptually or use replace_file_content smartly. 
-                       Wait, I can't easily jump blocks in replace_file_content. 
-                       I should target the Aggregation Block and the Review Icon block separately.
-                       Better to use multi_replace for this.
-                    */}
+
                     <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
                         {/* Cover Image */}
                         <div className="flex-shrink-0 mx-auto lg:mx-0 relative group">
@@ -338,7 +338,40 @@ export function BookDetailClient({ id }: { id: string }) {
                                     <PenLine size={16} />
                                 </button>
                             )}
+
+                            {/* Full Admin Controls */}
+                            {user && user.role === 'admin' && (
+                                <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        className="bg-stone-900/90 text-white p-2 rounded-full hover:scale-110 transition-transform shadow-lg backdrop-blur-sm"
+                                        onClick={() => setIsEditModalOpen(true)}
+                                        title="Editar Tudo (Admin)"
+                                    >
+                                        <Edit3 size={16} />
+                                    </button>
+                                    <button
+                                        className="bg-red-600/90 text-white p-2 rounded-full hover:scale-110 transition-transform shadow-lg backdrop-blur-sm"
+                                        onClick={async () => {
+                                            if (confirm('Tem certeza que deseja EXCLUIR este livro?')) {
+                                                const { error } = await supabase.from('books').delete().eq('id', book.id);
+                                                if (error) alert(error.message);
+                                                else router.push('/books');
+                                            }
+                                        }}
+                                        title="Excluir (Admin)"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
+
+                        <EditBookModal
+                            book={book}
+                            isOpen={isEditModalOpen}
+                            onClose={() => setIsEditModalOpen(false)}
+                            onUpdate={(updated) => setBook(updated)}
+                        />
 
                         {/* Book Info */}
                         <div className="flex-1 text-center lg:text-left">
@@ -553,59 +586,60 @@ export function BookDetailClient({ id }: { id: string }) {
             </main>
 
             {/* Modals */}
-            {book && (
-                <>
-                    <AddToListModal
-                        isOpen={showAddToList}
-                        onClose={() => setShowAddToList(false)}
-                        book={book}
-                        currentStatus={currentStatus}
-                        onSave={handleAddToList}
-                    />
+            {
+                book && (
+                    <>
+                        <AddToListModal
+                            isOpen={showAddToList}
+                            onClose={() => setShowAddToList(false)}
+                            book={book}
+                            currentStatus={currentStatus}
+                            onSave={handleAddToList}
+                        />
 
-                    {showReviewForm && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                            <div
-                                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                                onClick={() => {
-                                    setShowReviewForm(false);
-                                    setEditingReview(null);
-                                }}
-                            />
-                            <div className="relative w-full max-w-lg bg-paper rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
-                                <div className="flex items-center justify-between p-5 border-b border-stone-200">
-                                    <h2 className="font-serif text-xl font-semibold text-ink">
-                                        {editingReview ? 'Editar Review' : 'Escrever Review'}
-                                    </h2>
-                                    <button
-                                        onClick={() => {
-                                            setShowReviewForm(false);
-                                            setEditingReview(null);
-                                        }}
-                                        className="p-2 text-fade hover:text-ink transition-colors"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-                                <div className="p-5">
-                                    <ReviewForm
-                                        key={editingReview?.id || 'new'}
-                                        bookId={book.id}
-                                        bookTitle={book.title}
-                                        onSubmit={handleSubmitReview}
-                                        isLoading={isSubmitting}
-                                        isEditing={!!editingReview}
-                                        initialRating={editingReview?.rating || 0}
-                                        initialContent={editingReview?.content || ''}
-                                        initialVibes={editingReview?.vibes?.map(v => v.id) || []}
-                                        availableVibes={availableVibes}
-                                    />
+                        {showReviewForm && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                                <div
+                                    className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                                    onClick={() => {
+                                        setShowReviewForm(false);
+                                        setEditingReview(null);
+                                    }}
+                                />
+                                <div className="relative w-full max-w-lg bg-paper rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+                                    <div className="flex items-center justify-between p-5 border-b border-stone-200">
+                                        <h2 className="font-serif text-xl font-semibold text-ink">
+                                            {editingReview ? 'Editar Review' : 'Escrever Review'}
+                                        </h2>
+                                        <button
+                                            onClick={() => {
+                                                setShowReviewForm(false);
+                                                setEditingReview(null);
+                                            }}
+                                            className="p-2 text-fade hover:text-ink transition-colors"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                    <div className="p-5">
+                                        <ReviewForm
+                                            key={editingReview?.id || 'new'}
+                                            bookId={book.id}
+                                            bookTitle={book.title}
+                                            onSubmit={handleSubmitReview}
+                                            isLoading={isSubmitting}
+                                            isEditing={!!editingReview}
+                                            initialRating={editingReview?.rating || 0}
+                                            initialContent={editingReview?.content || ''}
+                                            initialVibes={editingReview?.vibes?.map(v => v.id) || []}
+                                            availableVibes={availableVibes}
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    )}
-                </>
-            )}
+                        )}
+                    </>
+                )}
         </div>
     );
 }
