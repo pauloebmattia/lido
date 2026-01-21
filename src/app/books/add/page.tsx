@@ -7,8 +7,10 @@ import Link from 'next/link';
 import { NavBar } from '@/components/NavBar';
 import { VibeBadge, VibePickerOption, DEFAULT_VIBES } from '@/components/VibeBadge';
 import { Button } from '@/components/ui/Button';
+import { useBookActions } from '@/hooks/useBookActions';
+import { createClient } from '@/lib/supabase/client';
 import type { CleanBookData } from '@/lib/google-books';
-import type { Vibe } from '@/lib/supabase/types';
+import type { Vibe, Profile } from '@/lib/supabase/types';
 
 function AddBookContent() {
     const searchParams = useSearchParams();
@@ -53,6 +55,27 @@ function AddBookContent() {
         fetchBook();
     }, [googleId]);
 
+    // Get user and book actions
+    const [user, setUser] = useState<Profile | null>(null);
+    const [supabase] = useState(() => createClient());
+    const { addBookToDatabase } = useBookActions();
+
+    // Fetch current user on mount
+    useEffect(() => {
+        async function fetchUser() {
+            const { data: { user: authUser } } = await supabase.auth.getUser();
+            if (authUser) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', authUser.id)
+                    .single();
+                setUser(profile);
+            }
+        }
+        fetchUser();
+    }, [supabase]);
+
     const handleVibeToggle = (vibe: Vibe) => {
         setSelectedVibes((prev) => {
             if (prev.find((v) => v.id === vibe.id)) {
@@ -67,18 +90,53 @@ function AddBookContent() {
         if (!book) return;
 
         setIsSubmitting(true);
+        setError('');
 
         try {
-            // Here you would:
-            // 1. Add book to database
-            // 2. Set reading status
-            // 3. Optionally submit review
+            // 1. Add book to database (or get existing)
+            const savedBook = await addBookToDatabase(book);
 
-            // For now, simulate success and redirect
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            if (!savedBook) {
+                throw new Error('Não foi possível salvar o livro');
+            }
+
+            // 2. Set reading status
+            const statusResponse = await fetch('/api/user-books', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    book_id: savedBook.id,
+                    status: readingStatus
+                }),
+            });
+
+            if (!statusResponse.ok) {
+                const data = await statusResponse.json();
+                throw new Error(data.error || 'Erro ao definir status');
+            }
+
+            // 3. Optionally submit review if rating is provided
+            if (rating > 0) {
+                const reviewResponse = await fetch('/api/reviews', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        book_id: savedBook.id,
+                        rating,
+                        content: reviewContent || null,
+                        vibes: selectedVibes.map(v => v.id),
+                        contains_spoilers: false,
+                    }),
+                });
+
+                if (!reviewResponse.ok) {
+                    console.warn('Review não foi salva, mas livro foi adicionado');
+                }
+            }
+
             router.push('/my-books');
         } catch (err) {
-            setError('Erro ao adicionar livro');
+            setError(err instanceof Error ? err.message : 'Erro ao adicionar livro');
         } finally {
             setIsSubmitting(false);
         }
@@ -177,8 +235,8 @@ function AddBookContent() {
                                     key={option.value}
                                     onClick={() => setReadingStatus(option.value)}
                                     className={`p-3 rounded-xl border-2 transition-all text-center ${readingStatus === option.value
-                                            ? 'border-accent bg-accent/5 text-accent font-medium'
-                                            : 'border-stone-200 text-fade hover:border-stone-300'
+                                        ? 'border-accent bg-accent/5 text-accent font-medium'
+                                        : 'border-stone-200 text-fade hover:border-stone-300'
                                         }`}
                                 >
                                     {option.label}
