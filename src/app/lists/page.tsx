@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, MoreVertical, BookOpen, Loader2, Trash2, Lock, Globe } from 'lucide-react';
+import { Plus, MoreVertical, BookOpen, Loader2, Trash2, Lock, Globe, Image as ImageIcon, X } from 'lucide-react';
 import Link from 'next/link';
 import { NavBar } from '@/components/NavBar';
 import { Button } from '@/components/ui/Button';
@@ -26,6 +26,8 @@ export default function ListsPage() {
     const [newListName, setNewListName] = useState('');
     const [newListDesc, setNewListDesc] = useState('');
     const [newListPublic, setNewListPublic] = useState(true);
+    const [coverFile, setCoverFile] = useState<File | null>(null);
+    const [coverPreview, setCoverPreview] = useState<string | null>(null);
     const [creating, setCreating] = useState(false);
     const [supabase] = useState(() => createClient());
 
@@ -61,6 +63,25 @@ export default function ListsPage() {
 
         setCreating(true);
         try {
+            let coverUrl = null;
+
+            // Upload cover if selected
+            if (coverFile) {
+                const fileExt = coverFile.name.split('.').pop();
+                const fileName = `list-covers/${Math.random()}.${fileExt}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('book-covers')
+                    .upload(fileName, coverFile);
+
+                if (!uploadError) {
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('book-covers')
+                        .getPublicUrl(fileName);
+                    coverUrl = publicUrl;
+                }
+            }
+
             const res = await fetch('/api/lists', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -68,6 +89,7 @@ export default function ListsPage() {
                     name: newListName,
                     description: newListDesc || null,
                     is_public: newListPublic,
+                    cover_url: coverUrl,
                 }),
             });
 
@@ -76,10 +98,20 @@ export default function ListsPage() {
                 setLists([data.list, ...lists]);
                 setNewListName('');
                 setNewListDesc('');
+                setCoverFile(null);
+                setCoverPreview(null);
                 setShowCreate(false);
             }
         } finally {
             setCreating(false);
+        }
+    };
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setCoverFile(file);
+            setCoverPreview(URL.createObjectURL(file));
         }
     };
 
@@ -142,6 +174,42 @@ export default function ListsPage() {
                                 <h2 className="font-serif text-xl font-semibold text-ink mb-4">Nova Lista</h2>
 
                                 <div className="space-y-4">
+                                    {/* Cover Upload */}
+                                    <div className="flex justify-center mb-6">
+                                        <div className="relative">
+                                            <div
+                                                className={`w-32 h-40 rounded-xl border-2 border-dashed flex items-center justify-center overflow-hidden transition-colors ${coverPreview ? 'border-accent' : 'border-stone-200 hover:border-accent'
+                                                    }`}
+                                            >
+                                                {coverPreview ? (
+                                                    <img src={coverPreview} alt="Preview" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="text-center text-fade p-2">
+                                                        <ImageIcon className="mx-auto mb-2" size={24} />
+                                                        <span className="text-xs">Adicionar Capa</span>
+                                                    </div>
+                                                )}
+                                                <input
+                                                    type="file"
+                                                    onChange={handleFileSelect}
+                                                    accept="image/*"
+                                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                                />
+                                            </div>
+                                            {coverPreview && (
+                                                <button
+                                                    onClick={() => {
+                                                        setCoverFile(null);
+                                                        setCoverPreview(null);
+                                                    }}
+                                                    className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+
                                     <div>
                                         <label className="block text-sm font-medium text-ink mb-1">Nome</label>
                                         <input
@@ -188,8 +256,12 @@ export default function ListsPage() {
                         <div className="grid gap-4 sm:grid-cols-2">
                             {lists.map((list) => (
                                 <div key={list.id} className="card p-4 flex gap-4">
-                                    <div className="w-16 h-20 bg-stone-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <BookOpen className="text-stone-400" size={24} />
+                                    <div className="w-16 h-20 bg-stone-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden relative">
+                                        {list.cover_url ? (
+                                            <img src={list.cover_url} alt={list.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <BookOpen className="text-stone-400" size={24} />
+                                        )}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-start justify-between">

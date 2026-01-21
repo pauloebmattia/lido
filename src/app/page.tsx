@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
-import { TrendingUp, Sparkles, BookOpen } from 'lucide-react';
+import { TrendingUp, Sparkles, BookOpen, Users } from 'lucide-react';
 import { NavBar } from '@/components/NavBar';
 import { BookCard } from '@/components/BookCard';
 import { Tagline } from '@/components/Logo';
@@ -94,6 +94,52 @@ export default async function HomePage() {
     }
   }
 
+
+
+  // Buscar atividade dos amigos (Se logado)
+  let friendsBooks: any[] = [];
+  if (user) {
+    const { data: following } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', user.id);
+
+    if (following && following.length > 0) {
+      const followingIds = following.map(f => f.following_id);
+
+      const { data: activity } = await supabase
+        .from('user_books')
+        .select(`
+                status,
+                updated_at,
+                book:books!book_id(*),
+                user:profiles!user_id(username, display_name, avatar_url)
+            `)
+        .in('user_id', followingIds)
+        .order('updated_at', { ascending: false })
+        .limit(20);
+
+      if (activity) {
+        const bookMap = new Map();
+        activity.forEach((item: any) => {
+          if (!item.book) return;
+          if (!bookMap.has(item.book.id)) {
+            bookMap.set(item.book.id, {
+              ...item.book,
+              friends_interaction: []
+            });
+          }
+          const entry = bookMap.get(item.book.id);
+          // Avoid duplicate users
+          if (!entry.friends_interaction.some((f: any) => f.username === item.user.username)) {
+            entry.friends_interaction.push(item.user);
+          }
+        });
+        friendsBooks = Array.from(bookMap.values()).slice(0, 4);
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen bg-paper">
       <NavBar user={user} />
@@ -124,6 +170,67 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* Friends Activity Section */}
+        {friendsBooks.length > 0 && (
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-b border-stone-100">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <Users className="text-accent" size={24} />
+                <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-ink">
+                  O que seus amigos estão lendo
+                </h2>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {friendsBooks.map((book) => (
+                <div key={book.id} className="card p-4 flex gap-4 hover:border-accent/30 transition-colors group">
+                  <Link href={`/books/${book.id}`} className="shrink-0">
+                    {book.cover_thumbnail ? (
+                      <img
+                        src={book.cover_thumbnail}
+                        alt={book.title}
+                        className="w-20 h-28 object-cover rounded shadow-sm group-hover:shadow-md transition-all"
+                      />
+                    ) : (
+                      <div className="w-20 h-28 bg-stone-100 rounded flex items-center justify-center">
+                        <BookOpen className="text-stone-300" size={24} />
+                      </div>
+                    )}
+                  </Link>
+                  <div className="flex flex-col justify-between min-w-0">
+                    <div>
+                      <Link href={`/books/${book.id}`}>
+                        <h3 className="font-medium text-ink line-clamp-2 leading-tight Group-hover:text-accent transition-colors">
+                          {book.title}
+                        </h3>
+                      </Link>
+                      <p className="text-xs text-fade mt-1 line-clamp-1">{book.authors?.join(', ')}</p>
+                    </div>
+
+                    <div className="mt-3">
+                      <div className="flex -space-x-2 overflow-hidden mb-1">
+                        {book.friends_interaction.slice(0, 3).map((friend: any, i: number) => (
+                          <img
+                            key={i}
+                            className="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover"
+                            src={friend.avatar_url || '/default-avatar.png'}
+                            alt={friend.display_name}
+                            title={friend.display_name || friend.username}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-fade">
+                        {book.friends_interaction.length} amigo{book.friends_interaction.length > 1 ? 's' : ''} interagiu
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Trending Books */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
