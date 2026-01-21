@@ -352,14 +352,16 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
                                 {badges.map((ub) => {
                                     // Icon Mapping
-                                    const IconComponent = {
+                                    const icons: { [key: string]: any } = {
                                         'BookOpen': BookOpen,
                                         'Layers': Layers,
                                         'Sparkles': Sparkles,
                                         'Trophy': Trophy,
                                         'MessageSquare': MessageSquare,
                                         'List': List
-                                    }[ub.badge.icon_name] || Star;
+                                    };
+
+                                    const IconComponent = icons[ub.badge.icon_name] || Star;
 
                                     return (
                                         <div key={ub.badge_id} className="bg-white p-4 rounded-xl border border-stone-100 shadow-sm flex flex-col items-center text-center hover:shadow-md transition-shadow group relative" title={ub.badge.description}>
