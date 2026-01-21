@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { searchAndCleanBooks, CleanBookData } from '@/lib/google-books';
+import { searchOpenLibrary } from '@/lib/openlibrary';
 
 export const runtime = 'edge';
 
@@ -85,6 +86,21 @@ export async function GET(request: NextRequest) {
             const remaining = maxResults - results.length;
             const googleBooks = await searchAndCleanBooks(searchQuery, remaining);
             results.push(...googleBooks);
+        }
+
+        // 3. Search OpenLibrary (if still need more results)
+        if (results.length < maxResults) {
+            const remaining = maxResults - results.length;
+            // Only search if we really need more (OL is slower sometimes and less standardized)
+            const openLibraryBooks = await searchOpenLibrary(searchQuery, remaining);
+
+            // Filter out duplicates (check against existing titles/authors vaguely or just append)
+            // Simple check: check if title already exists in results
+            const uniqueOL = openLibraryBooks.filter(olBook =>
+                !results.some(r => r.title.toLowerCase() === olBook.title.toLowerCase())
+            );
+
+            results.push(...uniqueOL);
         }
 
         return NextResponse.json({
