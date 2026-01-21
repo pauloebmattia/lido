@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Star, BookOpen, Loader2 } from 'lucide-react';
+import { ArrowLeft, Star, BookOpen, Loader2, Upload } from 'lucide-react';
 import Link from 'next/link';
 import { NavBar } from '@/components/NavBar';
 import { VibeBadge, VibePickerOption, DEFAULT_VIBES } from '@/components/VibeBadge';
@@ -28,6 +28,8 @@ function AddBookContent() {
     const [reviewContent, setReviewContent] = useState('');
     const [readingStatus, setReadingStatus] = useState<string>('want-to-read');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [coverFile, setCoverFile] = useState<File | null>(null);
+    const [coverPreview, setCoverPreview] = useState<string | null>(null);
 
     // Fetch book data
     useEffect(() => {
@@ -76,6 +78,17 @@ function AddBookContent() {
         fetchUser();
     }, [supabase]);
 
+    // Handle cover file selection
+    const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setCoverFile(file);
+            // Create preview URL
+            const previewUrl = URL.createObjectURL(file);
+            setCoverPreview(previewUrl);
+        }
+    };
+
     const handleVibeToggle = (vibe: Vibe) => {
         setSelectedVibes((prev) => {
             if (prev.find((v) => v.id === vibe.id)) {
@@ -98,6 +111,32 @@ function AddBookContent() {
 
             if (!savedBook) {
                 throw new Error('Não foi possível salvar o livro');
+            }
+
+            // 1.5 Upload cover if user provided one
+            if (coverFile && savedBook.id) {
+                const fileExt = coverFile.name.split('.').pop();
+                const fileName = `${savedBook.id}.${fileExt}`;
+                const filePath = `covers/${fileName}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('book-covers')
+                    .upload(filePath, coverFile, { upsert: true });
+
+                if (!uploadError) {
+                    // Get public URL
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('book-covers')
+                        .getPublicUrl(filePath);
+
+                    // Update book with cover URL
+                    await supabase
+                        .from('books')
+                        .update({ cover_url: publicUrl, cover_thumbnail: publicUrl })
+                        .eq('id', savedBook.id);
+                } else {
+                    console.warn('Cover upload failed:', uploadError);
+                }
             }
 
             // 2. Set reading status
@@ -187,17 +226,29 @@ function AddBookContent() {
                     {/* Book Info */}
                     <div className="card p-6 mt-4">
                         <div className="flex gap-6">
-                            {book.cover_url ? (
+                            {coverPreview ? (
+                                <img
+                                    src={coverPreview}
+                                    alt="Capa selecionada"
+                                    className="w-32 h-auto rounded-xl shadow-lg flex-shrink-0"
+                                />
+                            ) : book.cover_url ? (
                                 <img
                                     src={book.cover_url}
                                     alt={book.title}
                                     className="w-32 h-auto rounded-xl shadow-lg flex-shrink-0"
                                 />
                             ) : (
-                                <div className="w-32 h-48 bg-stone-100 rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-stone-300 flex-shrink-0">
-                                    <BookOpen className="text-stone-400 mb-2" size={32} />
-                                    <span className="text-xs text-stone-400 text-center px-2">Sem capa disponível</span>
-                                </div>
+                                <label className="w-32 h-48 bg-stone-100 rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-stone-300 flex-shrink-0 cursor-pointer hover:border-accent hover:bg-accent/5 transition-colors">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleCoverChange}
+                                        className="hidden"
+                                    />
+                                    <Upload className="text-stone-400 mb-2" size={24} />
+                                    <span className="text-xs text-stone-400 text-center px-2">Clique para adicionar capa</span>
+                                </label>
                             )}
                             <div>
                                 <h1 className="font-serif text-2xl sm:text-3xl font-bold text-ink">
