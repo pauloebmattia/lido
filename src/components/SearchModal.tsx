@@ -248,9 +248,12 @@ export function SearchModal({ isOpen, onClose, onSelectBook }: SearchModalProps)
 
             <div className="relative w-full max-w-2xl bg-paper rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
                 {/* Header */}
-                <div className="p-4 border-b border-stone-200 bg-white z-10">
-                    <div className="flex items-center gap-3 mb-4">
-                        <Search size={20} className="text-fade" />
+                {/* Header */}
+                <div className="p-6 border-b border-stone-200 bg-white z-10">
+                    <h2 className="text-lg font-serif font-medium text-ink mb-4">O que você deseja pesquisar?</h2>
+
+                    <div className="flex items-center gap-3 bg-stone-50 border border-stone-200 rounded-2xl px-5 py-4 mb-6 transition-all focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/10 focus-within:bg-white">
+                        <Search size={22} className="text-fade flex-shrink-0" />
                         <input
                             type="text"
                             value={query}
@@ -260,7 +263,7 @@ export function SearchModal({ isOpen, onClose, onSelectBook }: SearchModalProps)
                                     activeTab === 'lists' ? "Buscar listas..." :
                                         "Buscar pessoas..."
                             }
-                            className="flex-1 bg-transparent text-lg text-ink placeholder:text-fade outline-none"
+                            className="flex-1 bg-transparent text-lg text-ink placeholder:text-fade/70 outline-none"
                             autoFocus
                         />
                         {query && (
@@ -268,7 +271,8 @@ export function SearchModal({ isOpen, onClose, onSelectBook }: SearchModalProps)
                                 <X size={18} />
                             </button>
                         )}
-                        <button onClick={onClose} className="p-2 text-fade hover:text-ink">
+                        <button onClick={onClose} className="p-1 text-fade hover:text-ink ml-2">
+                            <span className="sr-only">Fechar</span>
                             <X size={20} />
                         </button>
                     </div>

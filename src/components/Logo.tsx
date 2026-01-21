@@ -20,7 +20,7 @@ export function Logo({ size = 'md', linkToHome = true }: LogoProps) {
     const logoContent = (
         <span
             className={`
-        font-serif font-bold tracking-tight
+        font-serif font-bold tracking-widest
         text-ink select-none
         ${sizes[size]}
       `}

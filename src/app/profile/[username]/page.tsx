@@ -55,7 +55,23 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                 .single();
 
             if (profileData) {
-                setProfile(profileData);
+                // Fetch real-time counts since database triggers might be missing
+                const { count: booksCount } = await supabase
+                    .from('user_books')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('user_id', profileData.id)
+                    .eq('status', 'read');
+
+                const { count: reviewsCount } = await supabase
+                    .from('reviews')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('user_id', profileData.id);
+
+                setProfile({
+                    ...profileData,
+                    books_read: booksCount || 0,
+                    reviews_count: reviewsCount || 0
+                });
 
                 // Fetch user's recent books
                 const { data: userBooks } = await supabase
