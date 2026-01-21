@@ -18,7 +18,7 @@ export function FloatingActionMenu({ user }: { user?: Profile | null }) {
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
             {/* Menu Items */}
             {isOpen && (
-                <div className="flex flex-col gap-3 mb-2 animate-fade-in-up">
+                <div className="flex flex-col gap-3 mb-2 animate-fade-in-up relative z-50">
                     <Link
                         href="/lists?action=new"
                         className="flex items-center gap-3 bg-white text-ink px-4 py-3 rounded-full shadow-lg border border-stone-100 hover:bg-stone-50 transition-all hover:scale-105 group"
@@ -47,7 +47,7 @@ export function FloatingActionMenu({ user }: { user?: Profile | null }) {
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={`
-                    w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-300
+                    w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-300 relative z-50
                     ${isOpen ? 'bg-stone-800 rotate-45' : 'bg-accent hover:scale-110'}
                 `}
                 aria-label="Adicionar"
