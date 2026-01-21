@@ -20,12 +20,12 @@ export function Logo({ size = 'md', linkToHome = true }: LogoProps) {
     const logoContent = (
         <span
             className={`
-        font-sans font-semibold uppercase
+        font-serif font-bold tracking-tight
         text-ink select-none
         ${sizes[size]}
       `}
         >
-            LIDO
+            Lido.
         </span>
     );
 

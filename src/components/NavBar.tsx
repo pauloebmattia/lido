@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, Menu, X, User, Bell, BookPlus, LogOut, Settings, MessageSquare, List } from 'lucide-react';
+import { Search, Menu, X, User, Bell, BookPlus, LogOut, Settings, Mail, List } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { SearchModal } from '@/components/SearchModal';
 import { Button } from '@/components/ui/Button';
@@ -51,21 +51,10 @@ export function NavBar({ user }: NavBarProps) {
                             <Link href="/books" className="text-fade hover:text-ink transition-colors">
                                 Explorar
                             </Link>
-                            <Link href="/users" className="text-fade hover:text-ink transition-colors">
-                                Encontrar Amigos
-                            </Link>
                             {user && (
-                                <>
-                                    <Link href="/my-books" className="text-fade hover:text-ink transition-colors">
-                                        Meus Livros
-                                    </Link>
-                                    <Link href="/lists" className="text-fade hover:text-ink transition-colors">
-                                        Listas
-                                    </Link>
-                                    <Link href="/messages" className="text-fade hover:text-ink transition-colors">
-                                        Mensagens
-                                    </Link>
-                                </>
+                                <Link href="/my-books" className="text-fade hover:text-ink transition-colors">
+                                    Meus Livros
+                                </Link>
                             )}
                         </div>
 
@@ -75,15 +64,17 @@ export function NavBar({ user }: NavBarProps) {
                             <button
                                 onClick={() => setSearchOpen(true)}
                                 className="p-2 text-fade hover:text-ink transition-colors"
-                                aria-label="Buscar livros"
+                                aria-label="Buscar"
                             >
                                 <Search size={20} />
                             </button>
 
                             {user ? (
                                 <>
-                                    {/* Add Book Button */}
-
+                                    {/* Messages Icon */}
+                                    <Link href="/messages" className="p-2 text-fade hover:text-ink transition-colors" aria-label="Mensagens">
+                                        <Mail size={20} />
+                                    </Link>
 
                                     {/* Notifications */}
                                     <NotificationBell />
@@ -127,7 +118,7 @@ export function NavBar({ user }: NavBarProps) {
 
                                                     <Link
                                                         href={`/profile/${user.username}`}
-                                                        className="flex items-center gap-2 px-4 py-2text-sm text-ink hover:bg-stone-50 transition-colors"
+                                                        className="flex items-center gap-2 px-4 py-2 text-sm text-ink hover:bg-stone-50 transition-colors"
                                                         onClick={() => setProfileOpen(false)}
                                                     >
                                                         <User size={16} className="text-fade" />
@@ -196,20 +187,6 @@ export function NavBar({ user }: NavBarProps) {
                                             onClick={() => setMobileMenuOpen(false)}
                                         >
                                             Meus Livros
-                                        </Link>
-                                        <Link
-                                            href="/lists"
-                                            className="px-4 py-2 text-fade hover:text-ink transition-colors"
-                                            onClick={() => setMobileMenuOpen(false)}
-                                        >
-                                            Minhas Listas
-                                        </Link>
-                                        <Link
-                                            href="/messages"
-                                            className="px-4 py-2 text-fade hover:text-ink transition-colors"
-                                            onClick={() => setMobileMenuOpen(false)}
-                                        >
-                                            Mensagens
                                         </Link>
                                         <button
                                             onClick={() => {

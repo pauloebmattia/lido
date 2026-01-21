@@ -1,10 +1,24 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Search, X, Loader2, Plus } from 'lucide-react';
-import { Input } from '@/components/ui/Input';
+import { Search, X, Loader2, Plus, Book, List as ListIcon, Users, User, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import type { CleanBookData } from '@/lib/google-books';
+import type { Profile } from '@/lib/supabase/types';
+
+interface SearchList {
+    id: string;
+    name: string;
+    description: string | null;
+    cover_url: string | null;
+    owner: {
+        username: string;
+        display_name: string | null;
+        avatar_url: string | null;
+    };
+    items: { count: number }[];
+}
 
 interface SearchModalProps {
     isOpen: boolean;
@@ -12,14 +26,33 @@ interface SearchModalProps {
     onSelectBook?: (book: CleanBookData) => void;
 }
 
+type SearchTab = 'books' | 'lists' | 'users';
+
 export function SearchModal({ isOpen, onClose, onSelectBook }: SearchModalProps) {
+    const [activeTab, setActiveTab] = useState<SearchTab>('books');
     const [query, setQuery] = useState('');
-    const [results, setResults] = useState<CleanBookData[]>([]);
+    const [bookResults, setBookResults] = useState<CleanBookData[]>([]);
+    const [listResults, setListResults] = useState<SearchList[]>([]);
+    const [userResults, setUserResults] = useState<Profile[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
 
-    // Debounced search
-    const searchBooks = useCallback(async (searchQuery: string) => {
+    // Reset results when tab changes
+    useEffect(() => {
+        setResults([]);
+        setHasSearched(false);
+        if (query.trim().length >= 3) {
+            handleSearch(query, activeTab);
+        }
+    }, [activeTab]);
+
+    const setResults = (data: any[]) => {
+        if (activeTab === 'books') setBookResults(data);
+        if (activeTab === 'lists') setListResults(data);
+        if (activeTab === 'users') setUserResults(data);
+    };
+
+    const handleSearch = useCallback(async (searchQuery: string, tab: SearchTab) => {
         if (searchQuery.length < 3) {
             setResults([]);
             setHasSearched(false);
@@ -30,11 +63,22 @@ export function SearchModal({ isOpen, onClose, onSelectBook }: SearchModalProps)
         setHasSearched(true);
 
         try {
-            const response = await fetch(`/api/books/search?q=${encodeURIComponent(searchQuery)}`);
+            let limit = tab === 'books' ? '' : '&limit=20'; // existing apis support limit?
+            let endpoint = '';
+
+            if (tab === 'books') endpoint = `/api/books/search?q=${encodeURIComponent(searchQuery)}`;
+            if (tab === 'lists') endpoint = `/api/lists/search?q=${encodeURIComponent(searchQuery)}`;
+            if (tab === 'users') endpoint = `/api/users/search?q=${encodeURIComponent(searchQuery)}`;
+
+            const response = await fetch(endpoint);
             const data = await response.json();
-            setResults(data.books || []);
+
+            if (tab === 'books') setBookResults(data.books || []);
+            if (tab === 'lists') setListResults(data.lists || []);
+            if (tab === 'users') setUserResults(data.users || []);
+
         } catch (error) {
-            console.error('Error searching books:', error);
+            console.error('Error searching:', error);
             setResults([]);
         } finally {
             setIsLoading(false);
@@ -45,12 +89,12 @@ export function SearchModal({ isOpen, onClose, onSelectBook }: SearchModalProps)
     useEffect(() => {
         const timer = setTimeout(() => {
             if (query) {
-                searchBooks(query);
+                handleSearch(query, activeTab);
             }
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [query, searchBooks]);
+    }, [query, activeTab, handleSearch]);
 
     // Close on Escape
     useEffect(() => {
@@ -61,6 +105,7 @@ export function SearchModal({ isOpen, onClose, onSelectBook }: SearchModalProps)
         if (isOpen) {
             document.addEventListener('keydown', handleKeyDown);
             document.body.style.overflow = 'hidden';
+            // Auto focus input is handled by autoFocus prop
         }
 
         return () => {
@@ -71,119 +116,195 @@ export function SearchModal({ isOpen, onClose, onSelectBook }: SearchModalProps)
 
     if (!isOpen) return null;
 
+    const renderResults = () => {
+        if (isLoading) {
+            return (
+                <div className="flex items-center justify-center py-12">
+                    <Loader2 className="animate-spin text-accent" size={32} />
+                </div>
+            );
+        }
+
+        if (hasSearched) {
+            const isEmpty =
+                (activeTab === 'books' && bookResults.length === 0) ||
+                (activeTab === 'lists' && listResults.length === 0) ||
+                (activeTab === 'users' && userResults.length === 0);
+
+            if (isEmpty) {
+                return (
+                    <div className="py-12 text-center">
+                        <p className="text-fade">Nenhum resultado encontrado para "{query}"</p>
+                    </div>
+                );
+            }
+
+            if (activeTab === 'books') {
+                return (
+                    <div className="divide-y divide-stone-100">
+                        {bookResults.map((book) => (
+                            <div
+                                key={book.google_books_id}
+                                className="flex gap-4 p-4 hover:bg-stone-50 transition-colors cursor-pointer group"
+                                onClick={() => onSelectBook?.(book)}
+                            >
+                                <div className="flex-shrink-0">
+                                    {book.cover_thumbnail ? (
+                                        <img src={book.cover_thumbnail} alt={book.title} className="w-12 h-18 rounded-lg object-cover shadow-sm group-hover:scale-105 transition-transform" />
+                                    ) : (
+                                        <div className="w-12 h-18 rounded-lg bg-stone-200 flex items-center justify-center">
+                                            <span className="text-xs text-fade">Sem capa</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0 self-center">
+                                    <h3 className="font-medium text-ink line-clamp-1">{book.title}</h3>
+                                    <p className="text-sm text-fade line-clamp-1">{book.authors.join(', ')}</p>
+                                </div>
+                                <div className="flex-shrink-0 self-center">
+                                    <Button variant="ghost" size="sm">
+                                        <Plus size={16} className="mr-1" />
+                                        Adicionar
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                );
+            }
+
+            if (activeTab === 'lists') {
+                return (
+                    <div className="divide-y divide-stone-100">
+                        {listResults.map((list) => (
+                            <Link href={`/lists/${list.id}`} key={list.id} onClick={onClose}>
+                                <div className="flex gap-4 p-4 hover:bg-stone-50 transition-colors group">
+                                    <div className="w-12 h-12 bg-stone-100 rounded-lg flex items-center justify-center text-stone-400 flex-shrink-0">
+                                        {list.cover_url ? (
+                                            <img src={list.cover_url} alt={list.name} className="w-full h-full object-cover rounded-lg" />
+                                        ) : (
+                                            <ListIcon size={20} />
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0 self-center">
+                                        <h3 className="font-medium text-ink line-clamp-1">{list.name}</h3>
+                                        <p className="text-xs text-fade mt-0.5">
+                                            por @{list.owner?.username} • {list.items?.[0]?.count || 0} livros
+                                        </p>
+                                    </div>
+                                    <div className="self-center">
+                                        <ChevronRight size={16} className="text-fade group-hover:text-accent" />
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                );
+            }
+
+            if (activeTab === 'users') {
+                return (
+                    <div className="divide-y divide-stone-100">
+                        {userResults.map((user) => (
+                            <Link href={`/profile/${user.username}`} key={user.id} onClick={onClose}>
+                                <div className="flex items-center gap-4 p-4 hover:bg-stone-50 transition-colors group">
+                                    <div className="flex-shrink-0">
+                                        {user.avatar_url ? (
+                                            <img src={user.avatar_url} alt={user.username} className="w-10 h-10 rounded-full object-cover ring-2 ring-stone-100" />
+                                        ) : (
+                                            <div className="w-10 h-10 rounded-full bg-stone-200 flex items-center justify-center text-stone-500">
+                                                <User size={20} />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-medium text-ink truncate">{user.display_name || user.username}</h3>
+                                        <p className="text-xs text-fade">@{user.username}</p>
+                                    </div>
+                                    <div className="self-center">
+                                        <ChevronRight size={16} className="text-fade group-hover:text-accent" />
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                );
+            }
+        }
+
+        return (
+            <div className="py-12 text-center text-fade">
+                Comece a digitar para buscar {activeTab === 'books' ? 'livros' : activeTab === 'lists' ? 'listas' : 'pessoas'}...
+            </div>
+        );
+    };
+
     return (
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4">
-            {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                 onClick={onClose}
             />
 
-            {/* Modal */}
-            <div className="relative w-full max-w-2xl bg-paper rounded-2xl shadow-2xl overflow-hidden">
+            <div className="relative w-full max-w-2xl bg-paper rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
                 {/* Header */}
-                <div className="p-4 border-b border-stone-200">
-                    <div className="flex items-center gap-3">
+                <div className="p-4 border-b border-stone-200 bg-white z-10">
+                    <div className="flex items-center gap-3 mb-4">
                         <Search size={20} className="text-fade" />
                         <input
                             type="text"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Buscar livros por título, autor ou ISBN..."
+                            placeholder={
+                                activeTab === 'books' ? "Buscar livros..." :
+                                    activeTab === 'lists' ? "Buscar listas..." :
+                                        "Buscar pessoas..."
+                            }
                             className="flex-1 bg-transparent text-lg text-ink placeholder:text-fade outline-none"
                             autoFocus
                         />
                         {query && (
-                            <button
-                                onClick={() => {
-                                    setQuery('');
-                                    setResults([]);
-                                    setHasSearched(false);
-                                }}
-                                className="p-1 text-fade hover:text-ink transition-colors"
-                            >
+                            <button onClick={() => setQuery('')} className="p-1 text-fade hover:text-ink">
                                 <X size={18} />
                             </button>
                         )}
-                        <button
-                            onClick={onClose}
-                            className="p-2 text-fade hover:text-ink transition-colors"
-                        >
+                        <button onClick={onClose} className="p-2 text-fade hover:text-ink">
                             <X size={20} />
+                        </button>
+                    </div>
+
+                    {/* Tabs */}
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setActiveTab('books')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'books' ? 'bg-ink text-paper' : 'bg-stone-100 text-fade hover:bg-stone-200 hover:text-ink'
+                                }`}
+                        >
+                            <Book size={16} />
+                            Livros
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('lists')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'lists' ? 'bg-ink text-paper' : 'bg-stone-100 text-fade hover:bg-stone-200 hover:text-ink'
+                                }`}
+                        >
+                            <ListIcon size={16} />
+                            Listas
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('users')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'users' ? 'bg-ink text-paper' : 'bg-stone-100 text-fade hover:bg-stone-200 hover:text-ink'
+                                }`}
+                        >
+                            <Users size={16} />
+                            Pessoas
                         </button>
                     </div>
                 </div>
 
-                {/* Results */}
-                <div className="max-h-[60vh] overflow-y-auto">
-                    {isLoading && (
-                        <div className="flex items-center justify-center py-12">
-                            <Loader2 className="animate-spin text-accent" size={32} />
-                        </div>
-                    )}
-
-                    {!isLoading && hasSearched && results.length === 0 && (
-                        <div className="py-12 text-center">
-                            <p className="text-fade">Nenhum livro encontrado para "{query}"</p>
-                            <p className="text-sm text-fade mt-2">
-                                Tente outro termo ou adicione manualmente
-                            </p>
-                        </div>
-                    )}
-
-                    {!isLoading && results.length > 0 && (
-                        <div className="divide-y divide-stone-100">
-                            {results.map((book) => (
-                                <div
-                                    key={book.google_books_id}
-                                    className="flex gap-4 p-4 hover:bg-stone-50 transition-colors cursor-pointer"
-                                    onClick={() => onSelectBook?.(book)}
-                                >
-                                    {/* Cover */}
-                                    <div className="flex-shrink-0">
-                                        {book.cover_thumbnail ? (
-                                            <img
-                                                src={book.cover_thumbnail}
-                                                alt={book.title}
-                                                className="w-12 h-18 rounded-lg object-cover shadow-sm"
-                                            />
-                                        ) : (
-                                            <div className="w-12 h-18 rounded-lg bg-stone-200 flex items-center justify-center">
-                                                <span className="text-xs text-fade">Sem capa</span>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Info */}
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-medium text-ink line-clamp-1">
-                                            {book.title}
-                                        </h3>
-                                        <p className="text-sm text-fade line-clamp-1">
-                                            {book.authors.join(', ')}
-                                        </p>
-                                        <p className="text-xs text-fade mt-1">
-                                            {book.publisher} {book.published_date && `• ${book.published_date.substring(0, 4)}`}
-                                        </p>
-                                    </div>
-
-                                    {/* Action */}
-                                    <div className="flex-shrink-0 self-center">
-                                        <Button variant="ghost" size="sm">
-                                            <Plus size={16} className="mr-1" />
-                                            Adicionar
-                                        </Button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {!hasSearched && !isLoading && (
-                        <div className="py-12 text-center">
-                            <p className="text-fade">Digite pelo menos 3 caracteres para buscar</p>
-                        </div>
-                    )}
+                {/* Results Area */}
+                <div className="overflow-y-auto flex-1 min-h-[300px]">
+                    {renderResults()}
                 </div>
             </div>
         </div>
