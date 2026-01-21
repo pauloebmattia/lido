@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Plus, MoreVertical, BookOpen, Loader2, Trash2, Lock, Globe, Image as ImageIcon, X } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -19,7 +19,7 @@ interface BookList {
     items: { count: number }[];
 }
 
-export default function ListsPage() {
+function ListsContent() {
     const searchParams = useSearchParams();
     const [user, setUser] = useState<Profile | null>(null);
     const [lists, setLists] = useState<BookList[]>([]);
@@ -311,5 +311,20 @@ export default function ListsPage() {
                 </div>
             </main>
         </div>
+    );
+}
+
+export default function ListsPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-paper">
+                <NavBar user={null} />
+                <div className="pt-32 flex justify-center">
+                    <Loader2 className="animate-spin text-fade" size={32} />
+                </div>
+            </div>
+        }>
+            <ListsContent />
+        </Suspense>
     );
 }
