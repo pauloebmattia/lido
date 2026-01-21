@@ -33,7 +33,7 @@ export function useBookActions({ userId }: UseBookActionsOptions = {}) {
                     .from('books')
                     .select('*')
                     .eq('isbn', bookData.isbn)
-                    .single();
+                    .maybeSingle();
                 existingBook = data;
             }
 
@@ -42,7 +42,7 @@ export function useBookActions({ userId }: UseBookActionsOptions = {}) {
                     .from('books')
                     .select('*')
                     .eq('google_books_id', bookData.google_books_id)
-                    .single();
+                    .maybeSingle();
                 existingBook = data;
             }
 
@@ -79,6 +79,7 @@ export function useBookActions({ userId }: UseBookActionsOptions = {}) {
 
             return newBook as Book;
         } catch (err) {
+            console.error('addBookToDatabase error:', err);
             const message = err instanceof Error ? err.message : 'Failed to add book';
             setError(message);
             return null;

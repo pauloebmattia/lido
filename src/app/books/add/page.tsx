@@ -107,10 +107,12 @@ function AddBookContent() {
 
         try {
             // 1. Add book to database (or get existing)
+            console.log('Adding book to database:', book.title);
             const savedBook = await addBookToDatabase(book);
+            console.log('Result:', savedBook);
 
             if (!savedBook) {
-                throw new Error('Não foi possível salvar o livro');
+                throw new Error('Não foi possível salvar o livro. Verifique se você está logado.');
             }
 
             // 1.5 Upload cover if user provided one
