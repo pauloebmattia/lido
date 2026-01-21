@@ -173,10 +173,10 @@ export default function ReaderPage() {
             // @ts-ignore
             setBook({
                 // @ts-ignore
-                title: bookData?.book?.title || 'Livro',
-                file_type: bookData.file_type as 'pdf' | 'epub',
-                book_id: bookData.book_id,
-                ...bookData
+                title: (bookData as any)?.book?.title || 'Livro',
+                file_type: (bookData as any).file_type as 'pdf' | 'epub',
+                book_id: (bookData as any).book_id,
+                ...(bookData as any)
             });
             setFileUrl(fileData.signedUrl);
             setIsLoading(false);

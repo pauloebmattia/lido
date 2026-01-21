@@ -68,12 +68,15 @@ export async function GET(request: NextRequest) {
                 description: b.description,
                 page_count: b.page_count,
                 categories: b.categories || [],
-                cover_thumbnail: b.cover_thumbnail || b.cover_url || null,
-                language: b.language || 'pt',
-                published_date: b.published_date,
-                publisher: b.publisher,
-                isbn: b.isbn || undefined
+                isbn: b.isbn || null,
+                subtitle: null,
+                publisher: null,
+                published_date: null,
+                language: 'pt',
+                cover_url: b.cover_url || null,
+                cover_thumbnail: b.cover_url || null,
             }));
+
             results.push(...mappedInternal);
         }
 

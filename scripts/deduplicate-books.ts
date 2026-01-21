@@ -51,7 +51,7 @@ async function deduplicateBooks() {
 
             // Sort by data quality (e.g., has cover, has description) or creation date
             // We want to keep the one with the longest description or most complete data
-            dupes.sort((a, b) => {
+            dupes.sort((a: any, b: any) => {
                 const scoreA = (a.description?.length || 0) + (a.cover_url ? 1000 : 0);
                 const scoreB = (b.description?.length || 0) + (b.cover_url ? 1000 : 0);
                 return scoreB - scoreA; // Descending
