@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Star, BookOpen, Users, Calendar, Bookmark, PenLine, Trash2, Edit3 } from 'lucide-react';
 import Link from 'next/link';
 import { NavBar } from '@/components/NavBar';
+import { FriendsActivity } from '@/components/FriendsActivity';
 import { VibeBadge, DEFAULT_VIBES } from '@/components/VibeBadge';
 import { Button } from '@/components/ui/Button';
 import { AddToListModal, ReadingStatus } from '@/components/AddToListModal';
@@ -385,6 +386,11 @@ export function BookDetailClient({ id }: { id: string }) {
                         className="text-fade leading-relaxed prose prose-stone max-w-none"
                         dangerouslySetInnerHTML={{ __html: book.description || 'Sem descrição disponível.' }}
                     />
+                </section>
+
+                {/* Friends Activity */}
+                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <FriendsActivity bookId={id} />
                 </section>
 
                 {/* Reviews */}
