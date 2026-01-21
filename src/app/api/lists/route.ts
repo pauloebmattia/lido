@@ -72,6 +72,7 @@ export async function POST(request: Request) {
             name,
             description,
             is_public,
+            cover_url: body.cover_url || null,
         })
         .select()
         .single();
@@ -105,6 +106,7 @@ export async function PUT(request: Request) {
             name,
             description,
             is_public,
+            cover_url: body.cover_url, // Allow update of cover_url
             updated_at: new Date().toISOString(),
         })
         .eq('id', list_id)
