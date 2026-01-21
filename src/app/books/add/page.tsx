@@ -187,12 +187,17 @@ function AddBookContent() {
                     {/* Book Info */}
                     <div className="card p-6 mt-4">
                         <div className="flex gap-6">
-                            {book.cover_url && (
+                            {book.cover_url ? (
                                 <img
                                     src={book.cover_url}
                                     alt={book.title}
                                     className="w-32 h-auto rounded-xl shadow-lg flex-shrink-0"
                                 />
+                            ) : (
+                                <div className="w-32 h-48 bg-stone-100 rounded-xl flex flex-col items-center justify-center border-2 border-dashed border-stone-300 flex-shrink-0">
+                                    <BookOpen className="text-stone-400 mb-2" size={32} />
+                                    <span className="text-xs text-stone-400 text-center px-2">Sem capa disponível</span>
+                                </div>
                             )}
                             <div>
                                 <h1 className="font-serif text-2xl sm:text-3xl font-bold text-ink">
