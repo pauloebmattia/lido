@@ -38,6 +38,11 @@ export const DEFAULT_VIBES: Vibe[] = [
     { id: 4, name: 'Plot Twist', slug: 'plottwist', emoji: '🎭', color: 'vibe-plottwist', description: 'Reviravoltas de cair o queixo', created_at: '' },
     { id: 5, name: 'Sombrio', slug: 'sombrio', emoji: '🌑', color: 'vibe-sombrio', description: 'Atmosfera dark e intensa', created_at: '' },
     { id: 6, name: 'Inspirador', slug: 'inspirador', emoji: '✨', color: 'vibe-inspirador', description: 'Te motiva a ser melhor', created_at: '' },
+    { id: 7, name: 'Divertido', slug: 'divertido', emoji: '😂', color: 'vibe-divertido', description: 'Te faz rir alto', created_at: '' },
+    { id: 8, name: 'Reflexivo', slug: 'reflexivo', emoji: '🤔', color: 'vibe-reflexivo', description: 'Te faz pensar muito', created_at: '' },
+    { id: 9, name: 'Apaixonante', slug: 'apaixonante', emoji: '😍', color: 'vibe-apaixonante', description: 'Romance de suspirar', created_at: '' },
+    { id: 10, name: 'Chocante', slug: 'chocante', emoji: '😱', color: 'vibe-chocante', description: 'Não acredito que isso aconteceu', created_at: '' },
+    { id: 11, name: 'Assustador', slug: 'assustador', emoji: '👻', color: 'vibe-assustador', description: 'De dar medo de verdade', created_at: '' },
 ];
 
 /**

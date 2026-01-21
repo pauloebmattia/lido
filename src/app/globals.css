@@ -36,6 +36,16 @@
   /* violet-300 */
   --color-vibe-inspirador: #FDE047;
   /* yellow-300 */
+  --color-vibe-divertido: #86EFAC;
+  /* green-300 */
+  --color-vibe-reflexivo: #A5B4FC;
+  /* indigo-300 */
+  --color-vibe-apaixonante: #FDA4AF;
+  /* rose-300 */
+  --color-vibe-chocante: #67E8F9;
+  /* cyan-300 */
+  --color-vibe-assustador: #94A3B8;
+  /* slate-400 */
 
   /* ===== Typography ===== */
   --font-serif: "Playfair Display", Georgia, serif;
@@ -177,6 +187,31 @@ h6,
 .vibe-inspirador {
   background: var(--color-vibe-inspirador);
   color: #713F12;
+}
+
+.vibe-divertido {
+  background: var(--color-vibe-divertido);
+  color: #14532D;
+}
+
+.vibe-reflexivo {
+  background: var(--color-vibe-reflexivo);
+  color: #312E81;
+}
+
+.vibe-apaixonante {
+  background: var(--color-vibe-apaixonante);
+  color: #881337;
+}
+
+.vibe-chocante {
+  background: var(--color-vibe-chocante);
+  color: #164E63;
+}
+
+.vibe-assustador {
+  background: var(--color-vibe-assustador);
+  color: #0F172A;
 }
 
 /* Link Accent */

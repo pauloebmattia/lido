@@ -62,6 +62,7 @@ export function BookDetailClient({ id }: { id: string }) {
     const [currentStatus, setCurrentStatus] = useState<ReadingStatus | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingReview, setEditingReview] = useState<ReviewWithUser | null>(null);
+    const [availableVibes, setAvailableVibes] = useState<Vibe[]>(DEFAULT_VIBES);
 
     useEffect(() => {
         async function loadData() {
@@ -119,6 +120,16 @@ export function BookDetailClient({ id }: { id: string }) {
 
                 // Cast to correct type since Supabase types are inferred differently
                 setReviews((reviewsData as any) || []);
+            }
+
+            // 4. Fetch Vibes
+            const { data: vibesData } = await supabase
+                .from('vibes')
+                .select('*')
+                .order('name');
+
+            if (vibesData && vibesData.length > 0) {
+                setAvailableVibes(vibesData);
             }
 
             setLoading(false);
@@ -257,20 +268,20 @@ export function BookDetailClient({ id }: { id: string }) {
         );
     }
 
-    // Aggregate vibes from reviews
-    const vibeCounts = reviews.reduce((acc, review) => {
+    // Aggregate specific vibes from reviews (Dynamic, ignoring DEFAULT_VIBES ids)
+    const vibeMap = new Map<number, Vibe & { count: number }>();
+
+    reviews.forEach(review => {
         if (review.vibes) {
             review.vibes.forEach(vibe => {
-                acc[vibe.id] = (acc[vibe.id] || 0) + 1;
+                const existing = vibeMap.get(vibe.id) || { ...vibe, count: 0 };
+                existing.count++;
+                vibeMap.set(vibe.id, existing);
             });
         }
-        return acc;
-    }, {} as Record<string, number>);
+    });
 
-    const topVibes = DEFAULT_VIBES
-        .map(vibe => ({ ...vibe, count: vibeCounts[vibe.id] || 0 }))
-        .filter(vibe => vibe.count > 0)
-        .sort((a, b) => b.count - a.count);
+    const topVibes = Array.from(vibeMap.values()).sort((a, b) => b.count - a.count);
 
     return (
         <div className="min-h-screen bg-paper">
@@ -279,9 +290,16 @@ export function BookDetailClient({ id }: { id: string }) {
             <main className="pt-20 pb-16 animate-fade-in">
                 {/* Book Hero */}
                 <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    {/* ... (Hero content omitted, unchanged) */}
+
+                    {/* Re-insert the rest of the file content conceptually or use replace_file_content smartly. 
+                       Wait, I can't easily jump blocks in replace_file_content. 
+                       I should target the Aggregation Block and the Review Icon block separately.
+                       Better to use multi_replace for this.
+                    */}
                     <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
                         {/* Cover Image */}
-                        <div className="flex-shrink-0 mx-auto lg:mx-0">
+                        <div className="flex-shrink-0 mx-auto lg:mx-0 relative group">
                             {book.cover_url ? (
                                 <img
                                     src={book.cover_url}
@@ -292,6 +310,32 @@ export function BookDetailClient({ id }: { id: string }) {
                                 <div className="w-64 h-96 rounded-2xl bg-stone-200 flex items-center justify-center text-fade">
                                     Sem capa
                                 </div>
+                            )}
+
+                            {/* Admin Edit Cover (Quick Fix) */}
+                            {user && (
+                                <button
+                                    className="absolute top-2 right-2 bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black"
+                                    onClick={async () => {
+                                        const newUrl = prompt('URL da nova capa (Alta Resolução):', book.cover_url || '');
+                                        if (newUrl && newUrl !== book.cover_url) {
+                                            const { error } = await supabase
+                                                .from('books')
+                                                .update({ cover_url: newUrl, cover_thumbnail: newUrl })
+                                                .eq('id', book.id);
+
+                                            if (!error) {
+                                                setBook({ ...book, cover_url: newUrl, cover_thumbnail: newUrl });
+                                                alert('Capa atualizada!');
+                                            } else {
+                                                alert('Erro ao atualizar capa.');
+                                            }
+                                        }
+                                    }}
+                                    title="Trocar capa (Admin)"
+                                >
+                                    <PenLine size={16} />
+                                </button>
                             )}
                         </div>
 
@@ -463,11 +507,11 @@ export function BookDetailClient({ id }: { id: string }) {
 
                                             <div className="mt-4 flex items-center justify-between">
                                                 <div className="flex items-center gap-4 text-sm">
-                                                    <button className="text-fade hover:text-accent transition-colors">
-                                                        ❤️ {review.likes_count}
+                                                    <button className="text-fade hover:text-accent transition-colors flex items-center gap-1">
+                                                        ❤️ {review.likes_count > 0 && <span>{review.likes_count}</span>}
                                                     </button>
-                                                    <button className="text-fade hover:text-accent transition-colors">
-                                                        💬 {review.comments_count}
+                                                    <button className="text-fade hover:text-accent transition-colors flex items-center gap-1">
+                                                        💬 {review.comments_count > 0 && <span>{review.comments_count}</span>}
                                                     </button>
                                                 </div>
 
@@ -553,6 +597,7 @@ export function BookDetailClient({ id }: { id: string }) {
                                         initialRating={editingReview?.rating || 0}
                                         initialContent={editingReview?.content || ''}
                                         initialVibes={editingReview?.vibes?.map(v => v.id) || []}
+                                        availableVibes={availableVibes}
                                     />
                                 </div>
                             </div>

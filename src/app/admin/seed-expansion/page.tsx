@@ -12,6 +12,21 @@ export default function SeedExpansionPage() {
     const [skipped, setSkipped] = useState(0);
     const [logs, setLogs] = useState<string[]>([]);
     const [isComplete, setIsComplete] = useState(false);
+    const [isVibesRunning, setIsVibesRunning] = useState(false);
+
+    const runVibes = async () => {
+        setIsVibesRunning(true);
+        try {
+            const res = await fetch('/api/admin/seed-vibes');
+            const data = await res.json();
+            setLogs(prev => [...prev, ...[`✨ Vibes Sync: ${data.message || 'Done'}`]]);
+            alert('Vibes sincronizadas com sucesso!');
+        } catch (e) {
+            alert('Erro ao sincronizar vibes');
+        } finally {
+            setIsVibesRunning(false);
+        }
+    };
 
     const runImport = async () => {
         setIsRunning(true);
@@ -63,6 +78,7 @@ export default function SeedExpansionPage() {
                         <li>👑 Coleções Completas: Stephen King, Tolkien, C.S. Lewis</li>
                         <li>📚 Autores: Colleen Hoover, José Luís Peixoto, Jorge Luis Borges</li>
                         <li>🖼️ Filtro Rigoroso: Apenas livros com capa de alta qualidade</li>
+                        <li>🎭 Novas Vibes: Adiciona Divertido, Reflexivo, Chocante, etc. (Botão Atualizar Vibes)</li>
                     </ul>
                 </div>
 
@@ -81,7 +97,18 @@ export default function SeedExpansionPage() {
                             <Loader2 className="mr-2 animate-spin" />
                             Importando... (Pode levar alguns segundos)
                         </Button>
+
                     )}
+
+                    <Button
+                        onClick={runVibes}
+                        disabled={isVibesRunning}
+                        variant="secondary"
+                        className="bg-stone-700 hover:bg-stone-600 text-stone-200"
+                    >
+                        {isVibesRunning ? <Loader2 className="mr-2 animate-spin" /> : '🎭'}
+                        Atualizar Vibes
+                    </Button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-6">
@@ -101,8 +128,8 @@ export default function SeedExpansionPage() {
                     ) : (
                         logs.map((log, i) => (
                             <div key={i} className={`py-1 border-b border-stone-800/50 ${log.includes('✅') ? 'text-green-400' :
-                                    log.includes('⏭️') ? 'text-yellow-500/70' :
-                                        log.includes('❌') ? 'text-red-400' : 'text-stone-300'
+                                log.includes('⏭️') ? 'text-yellow-500/70' :
+                                    log.includes('❌') ? 'text-red-400' : 'text-stone-300'
                                 }`}>
                                 {log}
                             </div>
@@ -110,6 +137,6 @@ export default function SeedExpansionPage() {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
