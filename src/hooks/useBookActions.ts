@@ -51,6 +51,23 @@ export function useBookActions({ userId }: UseBookActionsOptions = {}) {
             }
 
             // Insert new book
+            // Format published_date - Google Books sometimes returns just year (e.g., "2007")
+            let formattedDate: string | null = null;
+            if (bookData.published_date) {
+                const date = bookData.published_date;
+                if (/^\d{4}$/.test(date)) {
+                    // Year only (e.g., "2007") -> "2007-01-01"
+                    formattedDate = `${date}-01-01`;
+                } else if (/^\d{4}-\d{2}$/.test(date)) {
+                    // Year-month (e.g., "2007-05") -> "2007-05-01"
+                    formattedDate = `${date}-01`;
+                } else if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                    // Full date (e.g., "2007-05-15")
+                    formattedDate = date;
+                }
+                // Otherwise leave as null
+            }
+
             const { data: newBook, error: insertError } = await supabase
                 .from('books')
                 .insert({
@@ -60,7 +77,7 @@ export function useBookActions({ userId }: UseBookActionsOptions = {}) {
                     isbn: bookData.isbn,
                     google_books_id: bookData.google_books_id,
                     publisher: bookData.publisher,
-                    published_date: bookData.published_date,
+                    published_date: formattedDate,
                     description: bookData.description,
                     page_count: bookData.page_count,
                     language: bookData.language,
