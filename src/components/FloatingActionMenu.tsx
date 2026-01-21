@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, BookPlus, ListPlus, X } from 'lucide-react';
+import { Plus, BookPlus, ListPlus, X, PenTool } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { Profile } from '@/lib/supabase/types';
@@ -19,6 +19,17 @@ export function FloatingActionMenu({ user }: { user?: Profile | null }) {
             {/* Menu Items */}
             {isOpen && (
                 <div className="flex flex-col gap-3 mb-2 animate-fade-in-up relative z-50">
+                    <Link
+                        href="/publish"
+                        className="flex items-center gap-3 bg-white text-ink px-4 py-3 rounded-full shadow-lg border border-stone-100 hover:bg-stone-50 transition-all hover:scale-105 group"
+                        onClick={() => setIsOpen(false)}
+                    >
+                        <span className="font-medium text-sm">Publicar Obra Indie</span>
+                        <div className="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center">
+                            <PenTool size={18} />
+                        </div>
+                    </Link>
+
                     <Link
                         href="/lists?action=new"
                         className="flex items-center gap-3 bg-white text-ink px-4 py-3 rounded-full shadow-lg border border-stone-100 hover:bg-stone-50 transition-all hover:scale-105 group"

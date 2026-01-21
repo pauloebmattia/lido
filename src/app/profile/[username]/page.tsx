@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import { BookOpen, Users, Star, Calendar, Settings, Grid, Loader2, UserPlus, UserCheck } from 'lucide-react';
+import { BookOpen, Users, Star, Calendar, Settings, Grid, Loader2, UserPlus, UserCheck, Layers, Sparkles, Trophy, MessageSquare, List } from 'lucide-react';
 import Link from 'next/link';
 import { NavBar } from '@/components/NavBar';
 import { BookCard } from '@/components/BookCard';
@@ -24,6 +24,8 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
     const [profile, setProfile] = useState<Profile | null>(null);
     const [currentUser, setCurrentUser] = useState<Profile | null>(null);
     const [recentBooks, setRecentBooks] = useState<Book[]>([]);
+    const [totalPagesRead, setTotalPagesRead] = useState(0);
+    const [badges, setBadges] = useState<any[]>([]); // Using any for now to avoid extensive type imports/casts
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [isFollowing, setIsFollowing] = useState(false);
@@ -73,7 +75,6 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                     reviews_count: reviewsCount || 0
                 });
 
-                // Fetch user's recent books
                 const { data: userBooks } = await supabase
                     .from('user_books')
                     .select(`
@@ -89,6 +90,26 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                         .filter((ub: any) => ub.book)
                         .map((ub: any) => ub.book as Book);
                     setRecentBooks(books);
+                }
+
+                // Fetch Total Pages Read
+                const { data: allReadBooks } = await supabase
+                    .from('user_books')
+                    .select('book:books(page_count)')
+                    .eq('user_id', profileData.id)
+                    .eq('status', 'read');
+
+                const pages = allReadBooks?.reduce((sum, item: any) => sum + (item.book?.page_count || 0), 0) || 0;
+                setTotalPagesRead(pages);
+
+                // Fetch Badges
+                const { data: badgesData } = await supabase
+                    .from('user_badges')
+                    .select('*, badge:badges(*)')
+                    .eq('user_id', profileData.id);
+
+                if (badgesData) {
+                    setBadges(badgesData as any);
                 }
 
                 // Check if current user is following this profile
@@ -314,8 +335,45 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                                 <p className="text-3xl font-bold text-ink">{profile.level}</p>
                                 <p className="text-sm text-fade">Nível</p>
                             </div>
+                            <div className="text-center sm:hidden md:block">
+                                <p className="text-3xl font-bold text-accent">{totalPagesRead.toLocaleString()}</p>
+                                <p className="text-sm text-fade">Páginas Lidas</p>
+                            </div>
                         </div>
                     </div>
+
+                    {/* Badges Section */}
+                    {badges.length > 0 && (
+                        <div className="mb-8">
+                            <h2 className="font-serif text-xl font-semibold text-ink mb-4 flex items-center gap-2">
+                                <span className="bg-yellow-100 text-yellow-700 p-1 rounded-md"><Star size={16} /></span>
+                                Conquistas
+                            </h2>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                                {badges.map((ub) => {
+                                    // Icon Mapping
+                                    const IconComponent = {
+                                        'BookOpen': BookOpen,
+                                        'Layers': Layers,
+                                        'Sparkles': Sparkles,
+                                        'Trophy': Trophy,
+                                        'MessageSquare': MessageSquare,
+                                        'List': List
+                                    }[ub.badge.icon_name] || Star;
+
+                                    return (
+                                        <div key={ub.badge_id} className="bg-white p-4 rounded-xl border border-stone-100 shadow-sm flex flex-col items-center text-center hover:shadow-md transition-shadow group relative" title={ub.badge.description}>
+                                            <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mb-3 group-hover:bg-indigo-100 group-hover:scale-110 transition-all">
+                                                <IconComponent size={24} />
+                                            </div>
+                                            <p className="font-medium text-xs text-ink line-clamp-2">{ub.badge.name}</p>
+                                            <span className="text-[10px] text-fade mt-1">+{ub.badge.xp_reward} XP</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Recent Books */}
                     {recentBooks.length > 0 && (

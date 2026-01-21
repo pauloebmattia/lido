@@ -149,3 +149,23 @@ export interface Notification {
     // Joined
     actor?: Profile;
 }
+
+export interface Badge {
+    id: string;
+    name: string;
+    description: string;
+    icon_name: string;
+    category: 'reading' | 'social' | 'indie' | 'special';
+    condition_type: string | null;
+    condition_value: number;
+    xp_reward: number;
+    created_at: string;
+}
+
+export interface UserBadge {
+    user_id: string;
+    badge_id: string;
+    awarded_at: string;
+    // Joined
+    badge?: Badge;
+}

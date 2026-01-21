@@ -140,6 +140,15 @@ export default async function HomePage() {
     }
   }
 
+  // Buscar livros indie (Recent Early Access)
+  const { data: indieBooks } = await supabase
+    .from('early_access_books')
+    .select(`
+      book:books!inner(*)
+    `)
+    .limit(4)
+    .order('created_at', { ascending: false });
+
   return (
     <div className="min-h-screen bg-paper">
       <NavBar user={user} />
@@ -261,6 +270,41 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {/* Indie Spotlight Section */}
+        {indieBooks && indieBooks.length > 0 && (
+          <section className="bg-stone-50 border-y border-stone-100 py-16">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <Sparkles className="text-pink-500" size={24} />
+                  <div>
+                    <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-ink">
+                      Destaques Indie
+                    </h2>
+                    <p className="text-fade text-sm mt-1">Autoras e autores independentes para você descobrir</p>
+                  </div>
+                </div>
+                <Link
+                  href="/books/indie"
+                  className="text-pink-600 hover:underline text-sm font-medium"
+                >
+                  Ver todos →
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+                {indieBooks.map((item: any) => (
+                  <BookCard
+                    key={item.book.id}
+                    book={item.book}
+                    variant="default"
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Features Section */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid md:grid-cols-3 gap-8 stagger-children">
@@ -346,6 +390,6 @@ export default async function HomePage() {
           </div>
         </div>
       </footer>
-    </div>
+    </div >
   );
 }
