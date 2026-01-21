@@ -194,7 +194,7 @@ function AddBookContent() {
     if (error || !book) {
         return (
             <div className="min-h-screen bg-paper">
-                <NavBar />
+                <NavBar user={user} />
                 <main className="pt-20 pb-16">
                     <div className="max-w-2xl mx-auto px-4 text-center py-16">
                         <p className="text-fade text-lg">{error || 'Livro não encontrado'}</p>
@@ -212,7 +212,7 @@ function AddBookContent() {
 
     return (
         <div className="min-h-screen bg-paper">
-            <NavBar />
+            <NavBar user={user} />
 
             <main className="pt-20 pb-16">
                 <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
