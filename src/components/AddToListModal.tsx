@@ -122,17 +122,38 @@ export function AddToListModal({ isOpen, onClose, book, currentStatus, onSave }:
                 </div>
 
                 {/* Footer */}
-                <div className="flex justify-end gap-3 p-5 border-t border-stone-200">
-                    <Button variant="ghost" onClick={onClose}>
-                        Cancelar
-                    </Button>
-                    <Button
-                        onClick={handleSave}
-                        isLoading={isSubmitting}
-                        disabled={!selectedStatus}
-                    >
-                        Salvar
-                    </Button>
+                <div className="flex justify-between gap-3 p-5 border-t border-stone-200">
+                    {/* Remove button - only show if book is already in list */}
+                    {currentStatus && (
+                        <Button
+                            variant="ghost"
+                            onClick={async () => {
+                                setIsSubmitting(true);
+                                try {
+                                    await onSave(null);
+                                    onClose();
+                                } finally {
+                                    setIsSubmitting(false);
+                                }
+                            }}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            disabled={isSubmitting}
+                        >
+                            Remover
+                        </Button>
+                    )}
+                    <div className="flex gap-3 ml-auto">
+                        <Button variant="ghost" onClick={onClose}>
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={handleSave}
+                            isLoading={isSubmitting}
+                            disabled={!selectedStatus}
+                        >
+                            Salvar
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>
