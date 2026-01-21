@@ -9,6 +9,7 @@ import { VibeBadge, DEFAULT_VIBES } from '@/components/VibeBadge';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { createClient } from '@/lib/supabase/client';
+import { translateCategory } from '@/lib/utils';
 import type { Book, Profile, Vibe } from '@/lib/supabase/types';
 
 const CATEGORIES = [
@@ -43,31 +44,21 @@ export default function BooksPage() {
     const [user, setUser] = useState<Profile | null>(null);
     const [userBookIds, setUserBookIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
+    const [bookVibesMap, setBookVibesMap] = useState<Map<string, Set<number>>>(new Map());
     const [supabase] = useState(() => createClient());
 
     useEffect(() => {
         const loadData = async () => {
             setLoading(true);
 
-            // 1. Fetch User
+            // 1. Fetch User & Bookmarks
             const { data: { user: authUser } } = await supabase.auth.getUser();
             if (authUser) {
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', authUser.id)
-                    .single();
+                const { data: profile } = await supabase.from('profiles').select('*').eq('id', authUser.id).single();
                 setUser(profile);
 
-                // Fetch user's bookmarked books
-                const { data: userBooks } = await supabase
-                    .from('user_books')
-                    .select('book_id')
-                    .eq('user_id', authUser.id);
-
-                if (userBooks) {
-                    setUserBookIds(new Set(userBooks.map(ub => ub.book_id)));
-                }
+                const { data: userBooks } = await supabase.from('user_books').select('book_id').eq('user_id', authUser.id);
+                if (userBooks) setUserBookIds(new Set(userBooks.map(ub => ub.book_id)));
             }
 
             // 2. Fetch Books
@@ -76,8 +67,26 @@ export default function BooksPage() {
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            if (booksData) {
-                setBooks(booksData);
+            if (booksData) setBooks(booksData);
+
+            // 3. Fetch Vibes (via reviews)
+            const { data: reviewsData } = await supabase
+                .from('reviews')
+                .select('book_id, review_vibes(vibe_id)');
+
+            if (reviewsData) {
+                const vibesMap = new Map<string, Set<number>>();
+                reviewsData.forEach((review: any) => {
+                    if (!vibesMap.has(review.book_id)) {
+                        vibesMap.set(review.book_id, new Set());
+                    }
+                    if (review.review_vibes) {
+                        review.review_vibes.forEach((rv: any) => {
+                            vibesMap.get(review.book_id)?.add(rv.vibe_id);
+                        });
+                    }
+                });
+                setBookVibesMap(vibesMap);
             }
 
             setLoading(false);
@@ -86,7 +95,7 @@ export default function BooksPage() {
         loadData();
     }, [supabase]);
 
-    // Filter books based on search and category
+    // Filter books based on search, category and vibes
     const filteredBooks = books.filter((book) => {
         const matchesSearch =
             searchQuery === '' ||
@@ -95,10 +104,14 @@ export default function BooksPage() {
 
         const matchesCategory =
             selectedCategory === 'Todos' ||
-            (book.categories && book.categories.includes(selectedCategory));
+            (book.categories && book.categories.some(cat => translateCategory(cat) === selectedCategory));
 
-        return matchesSearch && matchesCategory;
-    }).sort((a, b) => {
+        const matchesVibes =
+            selectedVibes.length === 0 ||
+            (bookVibesMap.has(book.id) && selectedVibes.some(vId => bookVibesMap.get(book.id)?.has(vId)));
+
+        return matchesSearch && matchesCategory && matchesVibes;
+    }).sort((a, b) => { // ... unchanged sort logic ...
         if (sortBy === 'popular') return (b.avg_rating || 0) - (a.avg_rating || 0);
         if (sortBy === 'recent') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         if (sortBy === 'title') return a.title.localeCompare(b.title);
