@@ -8,6 +8,7 @@ import { Logo } from '@/components/Logo';
 import { SearchModal } from '@/components/SearchModal';
 import { Button } from '@/components/ui/Button';
 import { NotificationBell } from '@/components/NotificationBell';
+import { FloatingActionMenu } from '@/components/FloatingActionMenu';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/lib/supabase/types';
 import type { CleanBookData } from '@/lib/google-books';
@@ -82,13 +83,7 @@ export function NavBar({ user }: NavBarProps) {
                             {user ? (
                                 <>
                                     {/* Add Book Button */}
-                                    <button
-                                        onClick={() => setSearchOpen(true)}
-                                        className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm text-accent hover:bg-accent/10 rounded-full transition-colors"
-                                    >
-                                        <BookPlus size={18} />
-                                        <span>Adicionar</span>
-                                    </button>
+
 
                                     {/* Notifications */}
                                     <NotificationBell />
@@ -248,6 +243,8 @@ export function NavBar({ user }: NavBarProps) {
                 onClose={() => setSearchOpen(false)}
                 onSelectBook={handleSelectBook}
             />
+
+            <FloatingActionMenu user={user} />
         </>
     );
 }

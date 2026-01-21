@@ -134,7 +134,11 @@ export function BookDetailClient({ id }: { id: string }) {
                 .order('name');
 
             if (vibesData && vibesData.length > 0) {
-                setAvailableVibes(vibesData);
+                // Merge DB vibes with DEFAULT_VIBES to ensure new code-added vibes appear
+                const dbIds = new Set(vibesData.map(v => v.id));
+                const missingDefaults = DEFAULT_VIBES.filter(v => !dbIds.has(v.id));
+                const allVibes = [...vibesData, ...missingDefaults].sort((a, b) => a.name.localeCompare(b.name));
+                setAvailableVibes(allVibes);
             }
 
             setLoading(false);

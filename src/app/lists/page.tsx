@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, MoreVertical, BookOpen, Loader2, Trash2, Lock, Globe, Image as ImageIcon, X } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { NavBar } from '@/components/NavBar';
 import { Button } from '@/components/ui/Button';
 import { createClient } from '@/lib/supabase/client';
@@ -19,6 +20,7 @@ interface BookList {
 }
 
 export default function ListsPage() {
+    const searchParams = useSearchParams();
     const [user, setUser] = useState<Profile | null>(null);
     const [lists, setLists] = useState<BookList[]>([]);
     const [loading, setLoading] = useState(true);
@@ -57,6 +59,12 @@ export default function ListsPage() {
 
         loadData();
     }, [supabase]);
+
+    useEffect(() => {
+        if (searchParams.get('action') === 'new') {
+            setShowCreate(true);
+        }
+    }, [searchParams]);
 
     const handleCreateList = async () => {
         if (!newListName.trim()) return;
