@@ -53,12 +53,15 @@ export function SocialTicker({ initialActivities = [] }: SocialTickerProps) {
                         .eq('id', payload.new.id)
                         .single();
 
-                    if (data) {
+                    if (data && data.user && data.book) {
+                        const user = Array.isArray(data.user) ? data.user[0] : data.user;
+                        const book = Array.isArray(data.book) ? data.book[0] : data.book;
+
                         setActivity({
                             type: 'review',
-                            user: data.user.display_name || data.user.username,
+                            user: user.display_name || user.username,
                             action: 'acabou de avaliar',
-                            book: data.book.title,
+                            book: book.title,
                             detail: `${data.rating} estrelas`
                         });
                     }
