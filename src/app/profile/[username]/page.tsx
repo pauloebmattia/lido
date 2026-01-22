@@ -11,28 +11,36 @@ import { createClient } from '@/lib/supabase/client';
 import type { Book, Profile } from '@/lib/supabase/types';
 
 const TABS = [
-    { id: 'books', label: 'Livros', icon: BookOpen },
+    { id: 'books', label: 'Lidos', icon: BookOpen },
+    { id: 'published', label: 'Publicados', icon: Layers },
     { id: 'reviews', label: 'Reviews', icon: Star },
     { id: 'lists', label: 'Listas', icon: Grid },
     { id: 'following', label: 'Seguindo', icon: Users },
 ];
 
 import { EditProfileModal } from '@/components/EditProfileModal';
+import { useSearchParams } from 'next/navigation';
 
 export default function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
     const { username } = use(params);
     const [profile, setProfile] = useState<Profile | null>(null);
     const [currentUser, setCurrentUser] = useState<Profile | null>(null);
     const [recentBooks, setRecentBooks] = useState<Book[]>([]);
+    const [publishedBooks, setPublishedBooks] = useState<any[]>([]);
+    const [reviews, setReviews] = useState<any[]>([]);
+    const [lists, setLists] = useState<any[]>([]);
+    const [following, setFollowing] = useState<any[]>([]);
     const [totalPagesRead, setTotalPagesRead] = useState(0);
-    const [badges, setBadges] = useState<any[]>([]); // Using any for now to avoid extensive type imports/casts
-    const [loading, setLoading] = useState(true);
-    const [isEditing, setIsEditing] = useState(false);
-    const [isFollowing, setIsFollowing] = useState(false);
-    const [followLoading, setFollowLoading] = useState(false);
-    const [supabase] = useState(() => createClient());
 
-    const activeTab = 'books';
+    const searchParams = useSearchParams();
+    const [activeTab, setActiveTab] = useState('books');
+
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab && TABS.some(t => t.id === tab)) {
+            setActiveTab(tab);
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         async function loadData() {
@@ -120,6 +128,39 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                         setIsFollowing(followData.isFollowing);
                     }
                 }
+                if (isOwnProfile || true) { // Always fetch published books (public profile)
+                    const { data: pubBooks } = await supabase
+                        .from('early_access_books')
+                        .select('*, book:books(*)')
+                        .eq('author_id', profileData.id)
+                        .order('created_at', { ascending: false });
+
+                    if (pubBooks) setPublishedBooks(pubBooks);
+                }
+
+                // Fetch Reviews
+                const { data: userReviews } = await supabase
+                    .from('reviews')
+                    .select('*, book:books(*)')
+                    .eq('user_id', profileData.id)
+                    .order('created_at', { ascending: false });
+                if (userReviews) setReviews(userReviews);
+
+                // Fetch Lists
+                const { data: userLists } = await supabase
+                    .from('lists')
+                    .select('*, list_items(count)')
+                    .eq('owner_id', profileData.id)
+                    .order('created_at', { ascending: false });
+                if (userLists) setLists(userLists);
+
+                // Fetch Following
+                const { data: userFollowing } = await supabase
+                    .from('user_follows')
+                    .select('following:profiles!following_id(*)')
+                    .eq('follower_id', profileData.id);
+                if (userFollowing) setFollowing(userFollowing.map((f: any) => f.following));
+
             }
 
             setLoading(false);
@@ -298,6 +339,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                             {TABS.map((tab) => (
                                 <button
                                     key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
                                     className={`flex items-center gap-2 py-4 border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
                                         ? 'border-ink text-ink font-medium'
                                         : 'border-transparent text-fade hover:text-ink'
@@ -313,93 +355,221 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
 
                 {/* Content */}
                 <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {/* Reading Stats */}
-                    <div className="card p-6 mb-8">
-                        <h2 className="font-serif text-xl font-semibold text-ink mb-4">
-                            Estatísticas
-                        </h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-                            <div className="text-center">
-                                <p className="text-3xl font-bold text-ink">{profile.books_read}</p>
-                                <p className="text-sm text-fade">Livros lidos</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-3xl font-bold text-ink">{profile.reviews_count}</p>
-                                <p className="text-sm text-fade">Reviews</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-3xl font-bold text-ink">{profile.xp_points}</p>
-                                <p className="text-sm text-fade">XP Total</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-3xl font-bold text-ink">{profile.level}</p>
-                                <p className="text-sm text-fade">Nível</p>
-                            </div>
-                            <div className="text-center sm:hidden md:block">
-                                <p className="text-3xl font-bold text-accent">{totalPagesRead.toLocaleString()}</p>
-                                <p className="text-sm text-fade">Páginas Lidas</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Badges Section */}
-                    {badges.length > 0 && (
-                        <div className="mb-8">
-                            <h2 className="font-serif text-xl font-semibold text-ink mb-4 flex items-center gap-2">
-                                <span className="bg-yellow-100 text-yellow-700 p-1 rounded-md"><Star size={16} /></span>
-                                Conquistas
-                            </h2>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
-                                {badges.map((ub) => {
-                                    // Icon Mapping
-                                    const icons: { [key: string]: any } = {
-                                        'BookOpen': BookOpen,
-                                        'Layers': Layers,
-                                        'Sparkles': Sparkles,
-                                        'Trophy': Trophy,
-                                        'MessageSquare': MessageSquare,
-                                        'List': List
-                                    };
-
-                                    const IconComponent = icons[ub.badge.icon_name] || Star;
-
-                                    return (
-                                        <div key={ub.badge_id} className="bg-white p-4 rounded-xl border border-stone-100 shadow-sm flex flex-col items-center text-center hover:shadow-md transition-shadow group relative" title={ub.badge.description}>
-                                            <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mb-3 group-hover:bg-indigo-100 group-hover:scale-110 transition-all">
-                                                <IconComponent size={24} />
-                                            </div>
-                                            <p className="font-medium text-xs text-ink line-clamp-2">{ub.badge.name}</p>
-                                            <span className="text-[10px] text-fade mt-1">+{ub.badge.xp_reward} XP</span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Recent Books */}
-                    {recentBooks.length > 0 && (
+                    {/* Published Books Tab */}
+                    {activeTab === 'published' && (
                         <div>
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="font-serif text-xl font-semibold text-ink">
-                                    Livros Recentes
+                                    Livros Publicados
                                 </h2>
-                                <Link href={`/profile/${profile.username}/books`} className="text-accent text-sm hover:underline">
-                                    Ver todos →
-                                </Link>
+                                {isOwnProfile && (
+                                    <Link href="/publish/new">
+                                        <Button size="sm" variant="secondary">Nova Publicação</Button>
+                                    </Link>
+                                )}
                             </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                                {recentBooks.map((book) => (
-                                    <BookCard key={book.id} book={book} showActions={false} />
-                                ))}
-                            </div>
+
+                            {publishedBooks.length > 0 ? (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    {publishedBooks.map((item) => (
+                                        <BookCard
+                                            key={item.book.id}
+                                            book={item.book}
+                                            showActions={true}
+                                            variant="default"
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-12 text-fade">
+                                    <Layers size={48} className="mx-auto mb-4 opacity-50" />
+                                    <p>Nenhum livro publicado ainda.</p>
+                                </div>
+                            )}
                         </div>
                     )}
 
-                    {recentBooks.length === 0 && (
-                        <div className="text-center py-12 text-fade">
-                            <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
-                            <p>Nenhum livro lido ainda.</p>
+                    {/* Default/Books Tab */}
+                    {activeTab === 'books' && (
+                        <>
+                            {/* Reading Stats */}
+                            <div className="card p-6 mb-8">
+                                <h2 className="font-serif text-xl font-semibold text-ink mb-4">
+                                    Estatísticas
+                                </h2>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                                    <div className="text-center">
+                                        <p className="text-3xl font-bold text-ink">{profile.books_read}</p>
+                                        <p className="text-sm text-fade">Livros lidos</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-3xl font-bold text-ink">{profile.reviews_count}</p>
+                                        <p className="text-sm text-fade">Reviews</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-3xl font-bold text-ink">{profile.xp_points}</p>
+                                        <p className="text-sm text-fade">XP Total</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-3xl font-bold text-ink">{profile.level}</p>
+                                        <p className="text-sm text-fade">Nível</p>
+                                    </div>
+                                    <div className="text-center sm:hidden md:block">
+                                        <p className="text-3xl font-bold text-accent">{totalPagesRead.toLocaleString()}</p>
+                                        <p className="text-sm text-fade">Páginas Lidas</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Badges Section */}
+                            {badges.length > 0 && (
+                                <div className="mb-8">
+                                    <h2 className="font-serif text-xl font-semibold text-ink mb-4 flex items-center gap-2">
+                                        <span className="bg-yellow-100 text-yellow-700 p-1 rounded-md"><Star size={16} /></span>
+                                        Conquistas
+                                    </h2>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                                        {badges.map((ub) => {
+                                            // Icon Mapping
+                                            const icons: { [key: string]: any } = {
+                                                'BookOpen': BookOpen,
+                                                'Layers': Layers,
+                                                'Sparkles': Sparkles,
+                                                'Trophy': Trophy,
+                                                'MessageSquare': MessageSquare,
+                                                'List': List
+                                            };
+
+                                            const IconComponent = icons[ub.badge.icon_name] || Star;
+
+                                            return (
+                                                <div key={ub.badge_id} className="bg-white p-4 rounded-xl border border-stone-100 shadow-sm flex flex-col items-center text-center hover:shadow-md transition-shadow group relative" title={ub.badge.description}>
+                                                    <div className="w-12 h-12 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mb-3 group-hover:bg-indigo-100 group-hover:scale-110 transition-all">
+                                                        <IconComponent size={24} />
+                                                    </div>
+                                                    <p className="font-medium text-xs text-ink line-clamp-2">{ub.badge.name}</p>
+                                                    <span className="text-[10px] text-fade mt-1">+{ub.badge.xp_reward} XP</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Recent Books */}
+                            {recentBooks.length > 0 && (
+                                <div>
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h2 className="font-serif text-xl font-semibold text-ink">
+                                            Livros Recentes
+                                        </h2>
+                                        <Link href={`/profile/${profile.username}/books`} className="text-accent text-sm hover:underline">
+                                            Ver todos →
+                                        </Link>
+                                    </div>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                        {recentBooks.map((book) => (
+                                            <BookCard key={book.id} book={book} showActions={false} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {recentBooks.length === 0 && (
+                                <div className="text-center py-12 text-fade">
+                                    <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
+                                    <p>Nenhum livro lido ainda.</p>
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {/* Reviews Tab */}
+                    {activeTab === 'reviews' && (
+                        <div className="space-y-4">
+                            {reviews.length > 0 ? (
+                                reviews.map((review) => (
+                                    <div key={review.id} className="card p-4">
+                                        <div className="flex gap-4">
+                                            <div className="w-16 h-24 flex-shrink-0 bg-stone-200 rounded-md overflow-hidden">
+                                                <img src={review.book.cover_url || '/images/default-cover.png'} alt={review.book.title} className="w-full h-full object-cover" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex items-start justify-between">
+                                                    <div>
+                                                        <h3 className="font-medium text-ink">{review.book.title}</h3>
+                                                        <div className="flex items-center gap-1 mt-1">
+                                                            {[...Array(5)].map((_, i) => (
+                                                                <Star key={i} size={14} className={i < review.rating ? "text-yellow-500 fill-yellow-500" : "text-stone-300"} />
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-xs text-fade">{new Date(review.created_at).toLocaleDateString()}</span>
+                                                </div>
+                                                <p className="mt-2 text-sm text-fade line-clamp-2">{review.content}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-center py-12 text-fade">
+                                    <MessageSquare size={48} className="mx-auto mb-4 opacity-50" />
+                                    <p>Nenhuma avaliação feita ainda.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Lists Tab */}
+                    {activeTab === 'lists' && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {lists.length > 0 ? (
+                                lists.map((list) => (
+                                    <Link key={list.id} href={`/lists/${list.id}`} className="card p-4 hover:shadow-md transition-shadow">
+                                        <h3 className="font-serif font-bold text-lg text-ink mb-1">{list.name}</h3>
+                                        <p className="text-sm text-fade mb-4 line-clamp-2">{list.description}</p>
+                                        <div className="flex items-center justify-between text-xs text-fade">
+                                            <span>{list.list_items[0]?.count || 0} livros</span>
+                                            {list.is_public ? <span className="text-green-600">Pública</span> : <span>Privada</span>}
+                                        </div>
+                                    </Link>
+                                ))
+                            ) : (
+                                <div className="col-span-full text-center py-12 text-fade">
+                                    <List size={48} className="mx-auto mb-4 opacity-50" />
+                                    <p>Nenhuma lista criada ainda.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Following Tab */}
+                    {activeTab === 'following' && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {following.length > 0 ? (
+                                following.map((user) => (
+                                    <Link key={user.id} href={`/profile/${user.username}`} className="card p-4 flex items-center gap-3 hover:shadow-md transition-shadow">
+                                        <div className="w-10 h-10 rounded-full bg-stone-200 overflow-hidden">
+                                            {user.avatar_url ? (
+                                                <img src={user.avatar_url} alt={user.username} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-ink text-white font-bold">
+                                                    {user.username.charAt(0).toUpperCase()}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="font-medium text-ink truncate">{user.display_name || user.username}</p>
+                                            <p className="text-xs text-fade truncate">@{user.username}</p>
+                                        </div>
+                                    </Link>
+                                ))
+                            ) : (
+                                <div className="col-span-full text-center py-12 text-fade">
+                                    <Users size={48} className="mx-auto mb-4 opacity-50" />
+                                    <p>Não está seguindo ninguém.</p>
+                                </div>
+                            )}
                         </div>
                     )}
                 </section>
@@ -415,6 +585,6 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                     setCurrentUser(updated);
                 }}
             />
-        </div>
+        </div >
     );
 }
