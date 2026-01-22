@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Search, SlidersHorizontal, Grid, List } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { NavBar } from '@/components/NavBar';
 import { BookCard } from '@/components/BookCard';
 import { VibeBadge, DEFAULT_VIBES } from '@/components/VibeBadge';
@@ -32,7 +33,18 @@ const SORT_OPTIONS = [
 ];
 
 export default function BooksPage() {
-    const [searchQuery, setSearchQuery] = useState('');
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <BooksContent />
+        </Suspense>
+    );
+}
+
+function BooksContent() {
+    const searchParams = useSearchParams();
+    const initialQuery = searchParams.get('query') || '';
+
+    const [searchQuery, setSearchQuery] = useState(initialQuery);
     const [selectedCategory, setSelectedCategory] = useState('Todos');
     const [selectedVibes, setSelectedVibes] = useState<number[]>([]);
     const [sortBy, setSortBy] = useState('popular');

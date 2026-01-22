@@ -26,11 +26,11 @@ export function ImmersiveHero({ user, trendingBooks }: ImmersiveHeroProps) {
     // Decorate basic vibe tags for floating effect
     // We hardcode some popular vibes for the hero
     const HERO_VIBES = [
-        { id: 'v1', label: 'Plot Twist', color: 'plottwist', icon: 'zap' },
-        { id: 'v2', label: 'Choro Livre', color: 'choro', icon: 'cloud-rain' },
-        { id: 'v3', label: 'Sombrio', color: 'sombrio', icon: 'moon' },
-        { id: 'v4', label: 'Inspirador', color: 'inspirador', icon: 'sun' },
-        { id: 'v5', label: 'Épico', color: 'epico', icon: 'crown' },
+        { id: 'v1', name: 'Plot Twist', color: 'vibe-plottwist', emoji: '🎭' },
+        { id: 'v2', name: 'Choro Livre', color: 'vibe-choro', emoji: '😭' },
+        { id: 'v3', name: 'Sombrio', color: 'vibe-sombrio', emoji: '🌑' },
+        { id: 'v4', name: 'Inspirador', color: 'vibe-inspirador', emoji: '✨' },
+        { id: 'v5', name: 'Épico', color: 'vibe-epico', emoji: '👑' },
     ];
 
     return (
