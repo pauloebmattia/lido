@@ -23,6 +23,7 @@ function ListsContent() {
     const searchParams = useSearchParams();
     const [user, setUser] = useState<Profile | null>(null);
     const [lists, setLists] = useState<BookList[]>([]);
+    const [followedLists, setFollowedLists] = useState<BookList[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreate, setShowCreate] = useState(false);
     const [newListName, setNewListName] = useState('');
@@ -51,6 +52,19 @@ function ListsContent() {
                 if (res.ok) {
                     const data = await res.json();
                     setLists(data.lists || []);
+                }
+
+                // Fetch followed lists
+                const { data: followedData } = await supabase
+                    .from('list_followers')
+                    .select('list:book_lists(*, list_items(count))')
+                    .eq('user_id', authUser.id);
+
+                if (followedData) {
+                    const fLists = followedData
+                        .filter((f: any) => f.list)
+                        .map((f: any) => f.list);
+                    setFollowedLists(fLists);
                 }
             }
 
@@ -306,6 +320,35 @@ function ListsContent() {
                                 <Plus size={18} className="mr-2" />
                                 Criar Primeira Lista
                             </Button>
+                        </div>
+                    )}
+
+                    {/* Followed Lists Section */}
+                    {followedLists.length > 0 && (
+                        <div className="mt-12">
+                            <h2 className="font-serif text-xl font-bold text-ink mb-4">Listas que Sigo</h2>
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                {followedLists.map((list) => (
+                                    <Link key={list.id} href={`/lists/${list.id}`} className="card p-4 flex gap-4 hover:shadow-md transition-shadow">
+                                        <div className="w-16 h-20 bg-stone-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                            {list.cover_url ? (
+                                                <img src={list.cover_url} alt={list.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <BookOpen className="text-stone-400" size={24} />
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-medium text-ink truncate">{list.name}</h3>
+                                            {list.description && (
+                                                <p className="text-sm text-fade line-clamp-2 mt-1">{list.description}</p>
+                                            )}
+                                            <div className="flex items-center gap-3 mt-2 text-xs text-fade">
+                                                <span>{list.items?.[0]?.count || 0} livros</span>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>

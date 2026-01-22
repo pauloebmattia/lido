@@ -154,9 +154,9 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
 
                 // Fetch Lists
                 const { data: userLists } = await supabase
-                    .from('lists')
+                    .from('book_lists')
                     .select('*, list_items(count)')
-                    .eq('owner_id', profileData.id)
+                    .eq('user_id', profileData.id)
                     .order('created_at', { ascending: false });
                 if (userLists) setLists(userLists);
 

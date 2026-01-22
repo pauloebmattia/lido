@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Trash2, Loader2, Lock, Globe, BookOpen, Search, Pencil, Save, X, GripVertical, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Loader2, Lock, Globe, BookOpen, Search, Pencil, Save, X, GripVertical, Image as ImageIcon, Bookmark } from 'lucide-react';
 import Link from 'next/link';
 import { NavBar } from '@/components/NavBar';
 import { Button } from '@/components/ui/Button';
@@ -58,6 +58,10 @@ export default function ListDetailPage() {
     // Drag and Drop State
     const [draggedItem, setDraggedItem] = useState<ListItem | null>(null);
 
+    // Follow State
+    const [isFollowingList, setIsFollowingList] = useState(false);
+    const [followLoading, setFollowLoading] = useState(false);
+
     useEffect(() => {
         async function loadData() {
             setLoading(true);
@@ -77,6 +81,20 @@ export default function ListDetailPage() {
         }
         loadData();
     }, [listId, supabase]);
+
+    // Check if following after list loads
+    useEffect(() => {
+        async function checkFollow() {
+            if (list && user && user.id !== list.user_id) {
+                const res = await fetch(`/api/lists/follow?list_id=${listId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setIsFollowingList(data.isFollowing);
+                }
+            }
+        }
+        checkFollow();
+    }, [list, user, listId]);
 
     const fetchList = async () => {
         const res = await fetch(`/api/lists?list_id=${listId}`);
@@ -426,6 +444,36 @@ export default function ListDetailPage() {
                                             >
                                                 <Plus size={18} className="mr-2" />
                                                 Adicionar Livro
+                                            </Button>
+                                        )}
+
+                                        {/* Follow Button for non-owners */}
+                                        {!isOwner && user && (
+                                            <Button
+                                                onClick={async () => {
+                                                    setFollowLoading(true);
+                                                    try {
+                                                        if (isFollowingList) {
+                                                            await fetch(`/api/lists/follow?list_id=${listId}`, { method: 'DELETE' });
+                                                            setIsFollowingList(false);
+                                                        } else {
+                                                            await fetch('/api/lists/follow', {
+                                                                method: 'POST',
+                                                                headers: { 'Content-Type': 'application/json' },
+                                                                body: JSON.stringify({ list_id: listId })
+                                                            });
+                                                            setIsFollowingList(true);
+                                                        }
+                                                    } finally {
+                                                        setFollowLoading(false);
+                                                    }
+                                                }}
+                                                className="mt-6"
+                                                variant={isFollowingList ? 'ghost' : 'secondary'}
+                                                disabled={followLoading}
+                                            >
+                                                <Bookmark size={18} className={`mr-2 ${isFollowingList ? 'fill-current' : ''}`} />
+                                                {isFollowingList ? 'Seguindo' : 'Salvar Lista'}
                                             </Button>
                                         )}
                                     </>
