@@ -151,12 +151,95 @@ export default async function HomePage() {
     .limit(4)
     .order('created_at', { ascending: false });
 
+  // --- FETCH REAL ACTIVITY FOR TICKER ---
+  const [reviewsRes, listsRes, readingRes] = await Promise.all([
+    supabase
+      .from('reviews')
+      .select('created_at, rating, book:books(title), user:profiles(username, display_name)')
+      .order('created_at', { ascending: false })
+      .limit(5),
+    supabase
+      .from('book_lists')
+      .select('created_at, title, user:profiles(username, display_name)')
+      .order('created_at', { ascending: false })
+      .limit(3),
+    supabase
+      .from('user_books')
+      .select('updated_at, status, book:books(title), user:profiles(username, display_name)')
+      .order('updated_at', { ascending: false })
+      .limit(5)
+  ]);
+
+  const tickerActivities: any[] = [];
+
+  // 1. Reviews
+  reviewsRes.data?.forEach((r: any) => {
+    if (r.user && r.book) {
+      tickerActivities.push({
+        type: 'review',
+        user: r.user.display_name || r.user.username,
+        action: 'avaliou',
+        book: r.book.title,
+        detail: `${r.rating} estrelas`,
+        date: new Date(r.created_at)
+      });
+    }
+  });
+
+  // 2. Lists
+  listsRes.data?.forEach((l: any) => {
+    if (l.user) {
+      tickerActivities.push({
+        type: 'list',
+        user: l.user.display_name || l.user.username,
+        action: 'criou a lista',
+        book: l.title, // using book field for list title to fit layout
+        detail: '',
+        date: new Date(l.created_at)
+      });
+    }
+  });
+
+  // 3. User Activity
+  readingRes.data?.forEach((ub: any) => {
+    if (ub.user && ub.book) {
+      let action = 'interagiu com';
+      if (ub.status === 'reading') action = 'começou a ler';
+      if (ub.status === 'read') action = 'terminou de ler';
+      if (ub.status === 'want-to-read') action = 'quer ler';
+
+      tickerActivities.push({
+        type: 'reading',
+        user: ub.user.display_name || ub.user.username,
+        action: action,
+        book: ub.book.title,
+        detail: '',
+        date: new Date(ub.updated_at)
+      });
+    }
+  });
+
+  // Sort by most recent and limit
+  tickerActivities.sort((a, b) => b.date.getTime() - a.date.getTime());
+  const finalActivities = tickerActivities.slice(0, 8).map(({ date, ...rest }) => rest);
+
+  // Fallback if empty (so user sees SOMETHING)
+  if (finalActivities.length === 0) {
+    finalActivities.push({
+      type: 'reading',
+      user: 'Lido',
+      action: 'dá as boas-vindas',
+      book: 'a você',
+      detail: 'Explore e compartilhe!'
+    });
+  }
+
   return (
     <div className="min-h-screen bg-paper">
       <NavBar user={user} />
 
-      {/* Social Ticker (Client Component) */}
-      <SocialTicker />
+      {/* Social Ticker (Real Data) */}
+      <SocialTicker initialActivities={finalActivities} />
 
       {/* Main Content */}
       <main className="min-h-screen page-transition">

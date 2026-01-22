@@ -1,21 +1,37 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { User, BookOpen, Star } from 'lucide-react';
+import { User, BookOpen, Star, List } from 'lucide-react';
 
-const MOCK_ACTIVITIES = [
-    { user: 'Maria S.', action: 'avaliou', book: 'Duna', detail: '5 estrelas', icon: Star },
-    { user: 'João P.', action: 'começou a ler', book: 'O Hobbit', detail: '', icon: BookOpen },
-    { user: 'Ana C.', action: 'terminou', book: 'Torto Arado', detail: 'em 3 dias', icon: BookOpen },
-    { user: 'Lucas M.', action: 'adicionou', book: '1984', detail: 'à lista Quero Ler', icon: BookOpen },
-    { user: 'Beatriz L.', action: 'avaliou', book: 'Dom Casmurro', detail: '5 estrelas', icon: Star },
-];
+export interface TickerActivity {
+    type: 'review' | 'list' | 'reading' | 'want_to_read';
+    user: string;
+    action: string;
+    book: string;
+    detail: string;
+}
 
-export function SocialTicker() {
+interface SocialTickerProps {
+    initialActivities?: TickerActivity[];
+}
+
+export function SocialTicker({ initialActivities = [] }: SocialTickerProps) {
+    // If no real activities, fallback to mock (or empty if preferred, user said "substituir por notificações reais")
+    // User wants "activities and interactions of the user themselves" so even if few, use them.
+    // If empty, we might want to hide it or show a default "Welcome".
+
+    // Fallback Mock (only if initial is empty?) 
+    // User said "substituir... por notificações reais". So let's prioritize real.
+    // But if database is empty, it might look broken.
+    // I'll keep a few mocks only if real is empty, or just use real if length > 0.
+
+    const [activities, setActivities] = useState<TickerActivity[]>(initialActivities);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
+        if (activities.length === 0) return;
+
         // Initial delay
         const initialTimeout = setTimeout(() => setIsVisible(true), 2000);
 
@@ -23,7 +39,7 @@ export function SocialTicker() {
         const cycleInterval = setInterval(() => {
             setIsVisible(false);
             setTimeout(() => {
-                setCurrentIndex((prev) => (prev + 1) % MOCK_ACTIVITIES.length);
+                setCurrentIndex((prev) => (prev + 1) % activities.length);
                 setIsVisible(true);
             }, 500); // 500ms hide transition
         }, 6000);
@@ -32,10 +48,16 @@ export function SocialTicker() {
             clearTimeout(initialTimeout);
             clearInterval(cycleInterval);
         };
-    }, []);
+    }, [activities.length]);
 
-    const activity = MOCK_ACTIVITIES[currentIndex];
-    const Icon = activity.icon;
+    if (activities.length === 0) return null;
+
+    const activity = activities[currentIndex];
+
+    // Map type to icon
+    let Icon = BookOpen;
+    if (activity.type === 'review') Icon = Star;
+    if (activity.type === 'list') Icon = List;
 
     return (
         <div
