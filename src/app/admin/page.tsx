@@ -104,7 +104,8 @@ export default function AdminPage() {
         publisher: '',
         year: '',
         isbn: '',
-        count: 5
+        count: 5,
+        onlyBrazilian: false
     });
     const [seeding, setSeeding] = useState(false);
 
@@ -120,6 +121,7 @@ export default function AdminPage() {
             if (seedParams.publisher) params.append('publisher', seedParams.publisher);
             if (seedParams.year) params.append('year', seedParams.year);
             if (seedParams.isbn) params.append('isbn', seedParams.isbn);
+            if (seedParams.onlyBrazilian) params.append('lang', 'pt');
             params.append('count', seedParams.count.toString());
 
             const res = await fetch(`/api/seed?${params.toString()}`);
@@ -329,6 +331,19 @@ export default function AdminPage() {
                                     max={20}
                                     className="input w-full border border-stone-200 rounded-lg p-2"
                                 />
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="onlyBrazilian"
+                                    checked={seedParams.onlyBrazilian}
+                                    onChange={(e) => setSeedParams({ ...seedParams, onlyBrazilian: e.target.checked })}
+                                    className="h-4 w-4 rounded border-stone-300 text-accent focus:ring-accent"
+                                />
+                                <label htmlFor="onlyBrazilian" className="text-sm font-medium text-ink select-none">
+                                    Procurar por edições brasileiras?
+                                </label>
                             </div>
 
                             <Button
