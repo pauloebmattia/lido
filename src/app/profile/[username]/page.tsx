@@ -348,7 +348,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                 </section>
 
                 {/* Tabs */}
-                <section className="border-b border-stone-200 sticky top-16 bg-paper z-10">
+                <section className="border-b border-stone-200 sticky top-16 bg-paper z-30">
                     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                         <nav className="flex gap-8 overflow-x-auto">
                             {TABS.map((tab) => (
