@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { Plus, MoreVertical, BookOpen, Loader2, Trash2, Lock, Globe, Image as ImageIcon, X } from 'lucide-react';
+import { Plus, MoreVertical, BookOpen, Loader2, Trash2, Lock, Globe, Image as ImageIcon, X, Search, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { NavBar } from '@/components/NavBar';
@@ -19,6 +19,14 @@ interface BookList {
     items: { count: number }[];
 }
 
+interface DiscoverList extends BookList {
+    owner?: {
+        username: string;
+        display_name: string | null;
+        avatar_url: string | null;
+    };
+}
+
 function ListsContent() {
     const searchParams = useSearchParams();
     const [user, setUser] = useState<Profile | null>(null);
@@ -33,6 +41,12 @@ function ListsContent() {
     const [coverPreview, setCoverPreview] = useState<string | null>(null);
     const [creating, setCreating] = useState(false);
     const [supabase] = useState(() => createClient());
+
+    // Discovery state
+    const [discoverQuery, setDiscoverQuery] = useState('');
+    const [discoverResults, setDiscoverResults] = useState<DiscoverList[]>([]);
+    const [popularLists, setPopularLists] = useState<DiscoverList[]>([]);
+    const [searching, setSearching] = useState(false);
 
     useEffect(() => {
         async function loadData() {
@@ -351,6 +365,129 @@ function ListsContent() {
                             </div>
                         </div>
                     )}
+
+                    {/* Discover Lists Section */}
+                    <div className="mt-12 pt-8 border-t border-stone-200">
+                        <h2 className="font-serif text-2xl font-bold text-ink mb-6">Descobrir Listas</h2>
+
+                        {/* Search */}
+                        <div className="flex gap-2 mb-6">
+                            <div className="flex-1 relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-fade" size={18} />
+                                <input
+                                    type="text"
+                                    value={discoverQuery}
+                                    onChange={(e) => setDiscoverQuery(e.target.value)}
+                                    onKeyDown={async (e) => {
+                                        if (e.key === 'Enter' && discoverQuery.length >= 2) {
+                                            setSearching(true);
+                                            const res = await fetch(`/api/lists/search?q=${encodeURIComponent(discoverQuery)}`);
+                                            if (res.ok) {
+                                                const data = await res.json();
+                                                setDiscoverResults(data.lists || []);
+                                            }
+                                            setSearching(false);
+                                        }
+                                    }}
+                                    placeholder="Buscar listas por nome ou descrição..."
+                                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-stone-200 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+                                />
+                            </div>
+                            <Button
+                                onClick={async () => {
+                                    if (discoverQuery.length >= 2) {
+                                        setSearching(true);
+                                        const res = await fetch(`/api/lists/search?q=${encodeURIComponent(discoverQuery)}`);
+                                        if (res.ok) {
+                                            const data = await res.json();
+                                            setDiscoverResults(data.lists || []);
+                                        }
+                                        setSearching(false);
+                                    }
+                                }}
+                                disabled={searching || discoverQuery.length < 2}
+                                isLoading={searching}
+                            >
+                                Buscar
+                            </Button>
+                        </div>
+
+                        {/* Search Results */}
+                        {discoverResults.length > 0 && (
+                            <div className="mb-8">
+                                <h3 className="text-sm font-medium text-fade mb-3">Resultados da busca</h3>
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    {discoverResults.map((list) => (
+                                        <Link key={list.id} href={`/lists/${list.id}`} className="card p-4 flex gap-4 hover:shadow-md transition-shadow">
+                                            <div className="w-16 h-20 bg-stone-100 rounded-lg flex-shrink-0 overflow-hidden">
+                                                {list.cover_url ? (
+                                                    <img src={list.cover_url} alt={list.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <BookOpen className="text-stone-400" size={24} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-medium text-ink truncate">{list.name}</h3>
+                                                {list.owner && (
+                                                    <p className="text-xs text-fade">por @{list.owner.username}</p>
+                                                )}
+                                                {list.description && (
+                                                    <p className="text-sm text-fade line-clamp-1 mt-1">{list.description}</p>
+                                                )}
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {discoverQuery.length >= 2 && discoverResults.length === 0 && !searching && (
+                            <p className="text-center text-fade py-4">Nenhuma lista encontrada para "{discoverQuery}"</p>
+                        )}
+
+                        {/* Popular Lists */}
+                        {popularLists.length > 0 && (
+                            <div>
+                                <h3 className="text-sm font-medium text-fade mb-3 flex items-center gap-2">
+                                    <Users size={16} /> Listas da Comunidade
+                                </h3>
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    {popularLists.map((list) => (
+                                        <Link key={list.id} href={`/lists/${list.id}`} className="card p-4 flex gap-4 hover:shadow-md transition-shadow">
+                                            <div className="w-16 h-20 bg-stone-100 rounded-lg flex-shrink-0 overflow-hidden">
+                                                {list.cover_url ? (
+                                                    <img src={list.cover_url} alt={list.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <BookOpen className="text-stone-400" size={24} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-medium text-ink truncate">{list.name}</h3>
+                                                {list.owner && (
+                                                    <p className="text-xs text-fade">por @{list.owner.username}</p>
+                                                )}
+                                                {list.description && (
+                                                    <p className="text-sm text-fade line-clamp-1 mt-1">{list.description}</p>
+                                                )}
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {popularLists.length === 0 && discoverResults.length === 0 && !discoverQuery && (
+                            <div className="text-center py-8 text-fade">
+                                <Users size={32} className="mx-auto mb-3 opacity-50" />
+                                <p>Ainda não há listas públicas de outros usuários.</p>
+                                <p className="text-sm mt-1">Seja o primeiro a criar uma lista pública!</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </main>
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Search, Menu, X, User, Bell, BookPlus, LogOut, Settings, Mail, List } from 'lucide-react';
@@ -9,6 +9,7 @@ import { SearchModal } from '@/components/SearchModal';
 import { Button } from '@/components/ui/Button';
 import { NotificationBell } from '@/components/NotificationBell';
 import { FloatingActionMenu } from '@/components/FloatingActionMenu';
+import { BadgeAchievementModal } from '@/components/BadgeAchievementModal';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/lib/supabase/types';
 import type { CleanBookData } from '@/lib/google-books';
@@ -23,7 +24,45 @@ export function NavBar({ user }: NavBarProps) {
     const [searchOpen, setSearchOpen] = useState(false);
     const [addBookModalOpen, setAddBookModalOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
+    const [newBadge, setNewBadge] = useState<any>(null);
     const supabase = createClient();
+
+    // Check for new badges periodically or on mount
+    useEffect(() => {
+        if (!user) return;
+
+        const checkMyBadges = async () => {
+            const { data } = await supabase
+                .from('user_badges')
+                .select('*, badge:badges(*)')
+                .eq('user_id', user.id)
+                .eq('viewed', false)
+                .limit(1)
+                .maybeSingle();
+
+            if (data && data.badge) {
+                setNewBadge(data.badge);
+            }
+        };
+
+        checkMyBadges();
+        // Poll every 10 seconds just in case (simple solution)
+        const interval = setInterval(checkMyBadges, 10000);
+        return () => clearInterval(interval);
+    }, [user, supabase]);
+
+    const handleBadgeClose = async () => {
+        if (!newBadge || !user) return;
+
+        setNewBadge(null);
+
+        // Mark as viewed
+        await supabase
+            .from('user_badges')
+            .update({ viewed: true })
+            .eq('user_id', user.id)
+            .eq('viewed', false); // Mark all unviewed as viewed to prevent loop if multiple, or refine logic
+    };
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -265,6 +304,11 @@ export function NavBar({ user }: NavBarProps) {
             <FloatingActionMenu
                 user={user}
                 onAddBook={() => setAddBookModalOpen(true)}
+            />
+
+            <BadgeAchievementModal
+                badge={newBadge}
+                onClose={handleBadgeClose}
             />
         </>
     );

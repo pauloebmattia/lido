@@ -531,12 +531,23 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {lists.length > 0 ? (
                                 lists.map((list) => (
-                                    <Link key={list.id} href={`/lists/${list.id}`} className="card p-4 hover:shadow-md transition-shadow">
-                                        <h3 className="font-serif font-bold text-lg text-ink mb-1">{list.name}</h3>
-                                        <p className="text-sm text-fade mb-4 line-clamp-2">{list.description}</p>
-                                        <div className="flex items-center justify-between text-xs text-fade">
-                                            <span>{list.list_items[0]?.count || 0} livros</span>
-                                            {list.is_public ? <span className="text-green-600">Pública</span> : <span>Privada</span>}
+                                    <Link key={list.id} href={`/lists/${list.id}`} className="card p-4 hover:shadow-md transition-shadow flex gap-4">
+                                        <div className="w-16 h-20 bg-stone-100 rounded-lg flex-shrink-0 overflow-hidden">
+                                            {list.cover_url ? (
+                                                <img src={list.cover_url} alt={list.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <Grid size={24} className="text-stone-400" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-serif font-bold text-lg text-ink mb-1 truncate">{list.name}</h3>
+                                            <p className="text-sm text-fade mb-2 line-clamp-2">{list.description}</p>
+                                            <div className="flex items-center justify-between text-xs text-fade">
+                                                <span>{list.list_items?.[0]?.count || 0} livros</span>
+                                                {list.is_public ? <span className="text-green-600">Pública</span> : <span>Privada</span>}
+                                            </div>
                                         </div>
                                     </Link>
                                 ))
