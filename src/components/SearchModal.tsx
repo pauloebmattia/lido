@@ -271,11 +271,12 @@ export function SearchModal({ isOpen, onClose, onSelectBook }: SearchModalProps)
                                 <X size={18} />
                             </button>
                         )}
-                        <button onClick={onClose} className="p-1 text-fade hover:text-ink ml-2">
-                            <span className="sr-only">Fechar</span>
-                            <X size={20} />
-                        </button>
                     </div>
+                    {/* Close Modal Button - Moved outside input container */}
+                    <button onClick={onClose} className="absolute top-6 right-6 p-2 text-fade hover:text-ink hover:bg-stone-100 rounded-full transition-colors">
+                        <span className="sr-only">Fechar</span>
+                        <X size={24} />
+                    </button>
 
                     {/* Tabs */}
                     <div className="flex items-center gap-2">

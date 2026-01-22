@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { User, BookOpen, Star, List } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 export interface TickerActivity {
     type: 'review' | 'list' | 'reading' | 'want_to_read';
@@ -16,43 +17,82 @@ interface SocialTickerProps {
 }
 
 export function SocialTicker({ initialActivities = [] }: SocialTickerProps) {
-    // If no real activities, fallback to mock (or empty if preferred, user said "substituir por notificações reais")
-    // User wants "activities and interactions of the user themselves" so even if few, use them.
-    // If empty, we might want to hide it or show a default "Welcome".
-
-    // Fallback Mock (only if initial is empty?) 
-    // User said "substituir... por notificações reais". So let's prioritize real.
-    // But if database is empty, it might look broken.
-    // I'll keep a few mocks only if real is empty, or just use real if length > 0.
-
-    const [activities, setActivities] = useState<TickerActivity[]>(initialActivities);
-    const [currentIndex, setCurrentIndex] = useState(0);
+    const [activity, setActivity] = useState<TickerActivity | null>(initialActivities[0] || null);
     const [isVisible, setIsVisible] = useState(false);
+    const supabase = createClient();
+
+    // 1. Queue effect for Initial Activities (show one by one?? Or just show most recent?)
+    // User said: "Show ONLY when they happen".
+    // But initially we might want to show "recent" history?
+    // "não precisa ficar mostrando as atualizações o tempo inteiro repetindo" -> Stop loop.
+    // "mostre apenas no momento em que elas acontecerem mesmo" -> Realtime.
+    // So: Show initial (recent) ONCE, then wait for Realtime.
+
+    // Simplification: Show the FIRST initial activity, then listen for new ones.
 
     useEffect(() => {
-        if (activities.length === 0) return;
+        if (activity) {
+            setIsVisible(true);
+            const timer = setTimeout(() => setIsVisible(false), 5000); // Hide after 5s
+            return () => clearTimeout(timer);
+        }
+    }, [activity]);
 
-        // Initial delay
-        const initialTimeout = setTimeout(() => setIsVisible(true), 2000);
+    useEffect(() => {
+        // Realtime Subscription
+        const channel = supabase
+            .channel('public:ticker')
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'reviews' },
+                async (payload) => {
+                    // Fetch details (need joins, so we fetch by ID)
+                    const { data } = await supabase
+                        .from('reviews')
+                        .select('rating, book:books(title), user:profiles(username, display_name)')
+                        .eq('id', payload.new.id)
+                        .single();
 
-        // Cycle every 6 seconds
-        const cycleInterval = setInterval(() => {
-            setIsVisible(false);
-            setTimeout(() => {
-                setCurrentIndex((prev) => (prev + 1) % activities.length);
-                setIsVisible(true);
-            }, 500); // 500ms hide transition
-        }, 6000);
+                    if (data) {
+                        setActivity({
+                            type: 'review',
+                            user: data.user.display_name || data.user.username,
+                            action: 'acabou de avaliar',
+                            book: data.book.title,
+                            detail: `${data.rating} estrelas`
+                        });
+                    }
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'book_lists' },
+                async (payload) => {
+                    const { data } = await supabase
+                        .from('book_lists')
+                        .select('title, user:profiles(username, display_name)')
+                        .eq('id', payload.new.id)
+                        .single();
+                    if (data) {
+                        setActivity({
+                            type: 'list',
+                            user: data.user.display_name || data.user.username,
+                            action: 'criou a lista',
+                            book: data.title,
+                            detail: 'Confira!'
+                        });
+                    }
+                }
+            )
+            // Add user_books update logic if needed (UPDATE event)
+            .subscribe();
 
         return () => {
-            clearTimeout(initialTimeout);
-            clearInterval(cycleInterval);
+            supabase.removeChannel(channel);
         };
-    }, [activities.length]);
+    }, [supabase]);
 
-    if (activities.length === 0) return null;
-
-    const activity = activities[currentIndex];
+    if (!activity) return null;
 
     // Map type to icon
     let Icon = BookOpen;

@@ -58,8 +58,10 @@ export async function GET(request: NextRequest) {
         const { data: booksData } = await supabase
             .from('books')
             .select('*')
-            .ilike('title', `%${searchQuery}%`)
-            .limit(5);
+            // Simple OR search: Title ILIKE query OR Category contains query
+            // Note: Postgres full text search would be better, but this improves simple cases
+            .or(`title.ilike.%${searchQuery}%,categories.cs.{"${searchQuery}"}`)
+            .limit(10);
 
         if (booksData) {
             const mappedInternal: CleanBookData[] = booksData.map((b: any) => ({
