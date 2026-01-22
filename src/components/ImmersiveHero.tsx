@@ -111,19 +111,37 @@ export function ImmersiveHero({ user, trendingBooks }: ImmersiveHeroProps) {
 
                 {/* Social Proof */}
                 <div className="mt-12 flex items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.5s' }}>
-                    <div className="flex -space-x-3">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="w-10 h-10 rounded-full border-2 border-paper bg-stone-200 flex items-center justify-center overflow-hidden">
-                                <User size={20} className="text-stone-400" />
-                            </div>
-                        ))}
+                    <div className="flex -space-x-4">
+                        <img
+                            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces"
+                            alt="Semana"
+                            className="w-10 h-10 rounded-full border-2 border-paper object-cover"
+                        />
+                        <img
+                            src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=faces"
+                            alt="Leitor"
+                            className="w-10 h-10 rounded-full border-2 border-paper object-cover"
+                        />
+                        <img
+                            src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces"
+                            alt="Leitora"
+                            className="w-10 h-10 rounded-full border-2 border-paper object-cover"
+                        />
+                        <img
+                            src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces"
+                            alt="Leitor"
+                            className="w-10 h-10 rounded-full border-2 border-paper object-cover"
+                        />
+                        <div className="w-10 h-10 rounded-full border-2 border-paper bg-stone-100 flex items-center justify-center text-xs font-bold text-fade">
+                            +2k
+                        </div>
                     </div>
                     <div className="text-left">
                         <div className="flex items-center gap-1">
                             <span className="flex h-2 w-2 rounded-full bg-green-500"></span>
-                            <span className="text-sm font-bold text-ink">+200 leitores</span>
+                            <span className="text-sm font-medium text-ink">Junte-se a uma</span>
                         </div>
-                        <p className="text-xs text-fade">conectados agora</p>
+                        <p className="text-sm font-bold text-ink">comunidade de leitores</p>
                     </div>
                 </div>
 
