@@ -13,9 +13,29 @@ export async function GET(request: Request) {
 
     const supabase = await createClient();
 
-    // ... (auth check) ...
+    // Auth check
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    // ... (parts construction) ...
+    if (!query && !author && !publisher && !isbn) {
+        // Fallback: Seed Badges
+        const { data: badges } = await supabase.from('badges').select('id').limit(2);
+        if (badges && badges.length > 0) {
+            const inserts = badges.map(b => ({
+                user_id: user.id,
+                badge_id: b.id
+            }));
+            await supabase.from('user_badges').insert(inserts);
+        }
+        return NextResponse.json({ success: true, message: 'Badges seeded (no query provided)' });
+    }
+
+    // 1. Construct Advanced Google Books Query
+    const parts = [];
+    if (query) parts.push(query);
+    if (author) parts.push(`inauthor:${author}`);
+    if (publisher) parts.push(`inpublisher:${publisher}`);
+    if (isbn) parts.push(`isbn:${isbn}`);
 
     const finalQuery = parts.join('+');
 
