@@ -386,10 +386,10 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
 
                             {publishedBooks.length > 0 ? (
                                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {publishedBooks.map((item) => (
+                                    {publishedBooks.map((book) => (
                                         <BookCard
-                                            key={item.book.id}
-                                            book={item.book}
+                                            key={book.id}
+                                            book={book}
                                             showActions={true}
                                             variant="default"
                                         />
@@ -599,28 +599,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                         </div>
                     )}
 
-                    {/* Published Tab */}
-                    {activeTab === 'published' && (
-                        <div>
-                            {publishedBooks.length > 0 ? (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {publishedBooks.map((book) => (
-                                        <BookCard key={book.id} book={book} />
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="text-center py-12 text-fade">
-                                    <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
-                                    <p>Nenhum livro publicado ainda.</p>
-                                    {isOwnProfile && (
-                                        <Link href="/publish" className="text-accent hover:underline mt-2 inline-block">
-                                            Começar a publicar
-                                        </Link>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    )}
+
                 </section>
             </main>
 
