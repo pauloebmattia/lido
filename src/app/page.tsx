@@ -155,14 +155,14 @@ export default async function HomePage() {
     <div className="min-h-screen bg-paper">
       <NavBar user={user} />
 
+      {/* Social Ticker (Client Component) */}
+      <SocialTicker />
+
       {/* Main Content */}
       <main className="min-h-screen page-transition">
 
         {/* Immersive Hero */}
         <ImmersiveHero user={user} trendingBooks={trendingBooks} />
-
-        {/* Social Ticker (Client Component) */}
-        <SocialTicker />
 
         {/* Friends Activity Section */}
         {friendsBooks.length > 0 && (
