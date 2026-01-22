@@ -21,6 +21,7 @@ export function NavBar({ user }: NavBarProps) {
     const router = useRouter();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
+    const [addBookModalOpen, setAddBookModalOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const supabase = createClient();
 
@@ -31,7 +32,7 @@ export function NavBar({ user }: NavBarProps) {
     };
 
     const handleSelectBook = (book: CleanBookData) => {
-        setSearchOpen(false);
+        setAddBookModalOpen(false);
         // Navigate to book detail or add flow
         if (book.google_books_id) {
             router.push(`/books/add?google_id=${book.google_books_id}`);
@@ -60,14 +61,54 @@ export function NavBar({ user }: NavBarProps) {
 
                         {/* Right Side Actions */}
                         <div className="flex items-center gap-3">
-                            {/* Search Button */}
-                            <button
-                                onClick={() => setSearchOpen(true)}
-                                className="p-2 text-fade hover:text-ink transition-colors"
-                                aria-label="Buscar"
-                            >
-                                <Search size={20} />
-                            </button>
+                            {/* Search Dropdown */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setSearchOpen(!searchOpen)}
+                                    className="p-2 text-fade hover:text-ink transition-colors"
+                                    aria-label="Opções de Pesquisa"
+                                >
+                                    <Search size={20} />
+                                </button>
+
+                                {searchOpen && (
+                                    <>
+                                        <div
+                                            className="fixed inset-0 z-30"
+                                            onClick={() => setSearchOpen(false)}
+                                        />
+                                        <div className="absolute right-0 mt-2 w-48 bg-paper rounded-xl shadow-xl border border-stone-200 py-1 z-40 animate-fade-in-up">
+                                            <div className="px-4 py-2 border-b border-stone-100 text-xs text-fade font-medium uppercase tracking-wider">
+                                                Pesquisar por
+                                            </div>
+                                            <Link
+                                                href="/books"
+                                                className="flex items-center gap-2 px-4 py-3 text-sm text-ink hover:bg-stone-50 transition-colors"
+                                                onClick={() => setSearchOpen(false)}
+                                            >
+                                                <BookPlus size={16} className="text-fade" />
+                                                Livros
+                                            </Link>
+                                            <Link
+                                                href="/lists"
+                                                className="flex items-center gap-2 px-4 py-3 text-sm text-ink hover:bg-stone-50 transition-colors"
+                                                onClick={() => setSearchOpen(false)}
+                                            >
+                                                <List size={16} className="text-fade" />
+                                                Listas
+                                            </Link>
+                                            <Link
+                                                href="/users"
+                                                className="flex items-center gap-2 px-4 py-3 text-sm text-ink hover:bg-stone-50 transition-colors"
+                                                onClick={() => setSearchOpen(false)}
+                                            >
+                                                <User size={16} className="text-fade" />
+                                                Amigos
+                                            </Link>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
 
                             {user ? (
                                 <>
@@ -214,14 +255,17 @@ export function NavBar({ user }: NavBarProps) {
                 </nav>
             </header>
 
-            {/* Search Modal */}
+            {/* Search Modal (Only for adding books now) */}
             <SearchModal
-                isOpen={searchOpen}
-                onClose={() => setSearchOpen(false)}
+                isOpen={addBookModalOpen}
+                onClose={() => setAddBookModalOpen(false)}
                 onSelectBook={handleSelectBook}
             />
 
-            <FloatingActionMenu user={user} />
+            <FloatingActionMenu
+                user={user}
+                onAddBook={() => setAddBookModalOpen(true)}
+            />
         </>
     );
 }

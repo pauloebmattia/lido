@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { Profile } from '@/lib/supabase/types';
 
-export function FloatingActionMenu({ user }: { user?: Profile | null }) {
+export function FloatingActionMenu({ user, onAddBook }: { user?: Profile | null, onAddBook?: () => void }) {
     const [isOpen, setIsOpen] = useState(false);
     const pathname = usePathname();
 
@@ -41,16 +41,18 @@ export function FloatingActionMenu({ user }: { user?: Profile | null }) {
                         </div>
                     </Link>
 
-                    <Link
-                        href="/books/add"
+                    <button
+                        onClick={() => {
+                            setIsOpen(false);
+                            onAddBook?.();
+                        }}
                         className="flex items-center gap-3 bg-white text-ink px-4 py-3 rounded-full shadow-lg border border-stone-100 hover:bg-stone-50 transition-all hover:scale-105 group"
-                        onClick={() => setIsOpen(false)}
                     >
                         <span className="font-medium text-sm">Adicionar Livro</span>
                         <div className="w-8 h-8 rounded-full bg-accent/10 text-accent flex items-center justify-center">
                             <BookPlus size={18} />
                         </div>
-                    </Link>
+                    </button>
                 </div>
             )}
 
