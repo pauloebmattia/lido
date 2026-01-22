@@ -52,6 +52,9 @@
   /* cyan-300 */
   --color-vibe-assustador: #94A3B8;
   /* slate-400 */
+  --color-vibe-epico: #FCD34D;
+  /* amber-300 */
+
 
   /* ===== Typography ===== */
   --font-serif: var(--font-serif), Georgia, serif;
@@ -231,6 +234,12 @@ h6,
 .vibe-assustador {
   background: var(--color-vibe-assustador);
   color: #0F172A;
+}
+
+.vibe-epico {
+  background: var(--color-vibe-epico);
+  color: #78350F;
+  /* Amber 900 */
 }
 
 /* Link Accent */

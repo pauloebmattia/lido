@@ -30,6 +30,7 @@ export function ImmersiveHero({ user, trendingBooks }: ImmersiveHeroProps) {
         { id: 'v2', label: 'Choro Livre', color: 'choro', icon: 'cloud-rain' },
         { id: 'v3', label: 'Sombrio', color: 'sombrio', icon: 'moon' },
         { id: 'v4', label: 'Inspirador', color: 'inspirador', icon: 'sun' },
+        { id: 'v5', label: 'Épico', color: 'epico', icon: 'crown' },
     ];
 
     return (

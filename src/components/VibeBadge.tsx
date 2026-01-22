@@ -43,6 +43,7 @@ export const DEFAULT_VIBES: Vibe[] = [
     { id: 9, name: 'Apaixonante', slug: 'apaixonante', emoji: '😍', color: 'vibe-apaixonante', description: 'Romance de suspirar', created_at: '' },
     { id: 10, name: 'Chocante', slug: 'chocante', emoji: '😱', color: 'vibe-chocante', description: 'Não acredito que isso aconteceu', created_at: '' },
     { id: 11, name: 'Assustador', slug: 'assustador', emoji: '👻', color: 'vibe-assustador', description: 'De dar medo de verdade', created_at: '' },
+    { id: 12, name: 'Épico', slug: 'epico', emoji: '👑', color: 'vibe-epico', description: 'Grandes jornadas e feitos heróicos', created_at: '' },
 ];
 
 /**
