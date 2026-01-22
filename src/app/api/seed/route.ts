@@ -3,20 +3,22 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
-    const query = searchParams.get('query');
+    const query = searchParams.get('query') || '';
+    const author = searchParams.get('author');
+    const publisher = searchParams.get('publisher');
+    const year = searchParams.get('year');
+    const isbn = searchParams.get('isbn');
     const count = parseInt(searchParams.get('count') || '5');
 
     const supabase = await createClient();
 
-    // Auth check (simple version, ideally middleware)
+    // Auth check
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    if (!query) {
-        // Fallback: Seed Badges for current user if no query
-        // This preserves the original walkthrough function
+    if (!query && !author && !publisher && !isbn) {
+        // Fallback: Seed Badges
         const { data: badges } = await supabase.from('badges').select('id').limit(2);
-
         if (badges && badges.length > 0) {
             const inserts = badges.map(b => ({
                 user_id: user.id,
@@ -27,19 +29,49 @@ export async function GET(request: Request) {
         return NextResponse.json({ success: true, message: 'Badges seeded (no query provided)' });
     }
 
-    // 1. Fetch from Google Books
-    const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_BOOKS_API_KEY || ''; // Use env
-    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=${count}&key=${GOOGLE_API_KEY}`);
+    // 1. Construct Advanced Google Books Query
+    // Better Google Books filters:
+    // intitle: Returns results where the text following this keyword is found in the title.
+    // inauthor: Returns results where the text following this keyword is found in the author.
+    // inpublisher: Returns results where the text following this keyword is found in the publisher.
+    // subject: Returns results where the text following this keyword is listed in the category list of the volume.
+    // isbn: Returns results where the text following this keyword is the ISBN number.
+
+    // Re-construct safely
+    const parts = [];
+    if (query) parts.push(query);
+    if (author) parts.push(`inauthor:${author}`);
+    if (publisher) parts.push(`inpublisher:${publisher}`);
+    if (isbn) parts.push(`isbn:${isbn}`);
+
+    const finalQuery = parts.join('+');
+
+    const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_BOOKS_API_KEY || '';
+    const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(finalQuery)}&maxResults=${count}&key=${GOOGLE_API_KEY}`;
+
+    console.log('Fetching Google Books:', apiUrl); // Debug log
+
+    const res = await fetch(apiUrl);
     const data = await res.json();
 
+    if (data.error) {
+        console.error('Google API Error:', data.error);
+        return NextResponse.json({ error: data.error.message || 'Google Books API Error' }, { status: res.status });
+    }
+
     if (!data.items) {
-        return NextResponse.json({ error: 'No books found to seed' }, { status: 404 });
+        return NextResponse.json({ error: 'No books found for these filters' }, { status: 404 });
     }
 
     let addedCount = 0;
 
     for (const item of data.items) {
         const volumeInfo = item.volumeInfo;
+
+        // Year filter check (soft filter if API didn't perfectly respect it)
+        if (year && !volumeInfo.publishedDate?.includes(year)) {
+            continue;
+        }
 
         // 2. Insert into 'books' table first
         const { data: book, error: bookError } = await supabase

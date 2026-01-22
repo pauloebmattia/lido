@@ -98,7 +98,14 @@ export default function AdminPage() {
     };
 
     const [activeTab, setActiveTab] = useState<'pending' | 'seeds'>('pending');
-    const [seedParams, setSeedParams] = useState({ query: '', count: 5 });
+    const [seedParams, setSeedParams] = useState({
+        query: '',
+        author: '',
+        publisher: '',
+        year: '',
+        isbn: '',
+        count: 5
+    });
     const [seeding, setSeeding] = useState(false);
 
     // ... (keep fetchPendingBooks and handle functions)
@@ -106,18 +113,23 @@ export default function AdminPage() {
     const handleSeed = async () => {
         setSeeding(true);
         try {
-            // Call the seed API (we need to update it to accept params or create a new one)
-            // For now, using the simple seed route as a placeholder or assuming it handles queries
-            // In a real app, this would perform a specific search-and-insert
-            const res = await fetch(`/api/seed?query=${encodeURIComponent(seedParams.query)}&count=${seedParams.count}`);
+            // Construct Query Params
+            const params = new URLSearchParams();
+            if (seedParams.query) params.append('query', seedParams.query);
+            if (seedParams.author) params.append('author', seedParams.author);
+            if (seedParams.publisher) params.append('publisher', seedParams.publisher);
+            if (seedParams.year) params.append('year', seedParams.year);
+            if (seedParams.isbn) params.append('isbn', seedParams.isbn);
+            params.append('count', seedParams.count.toString());
+
+            const res = await fetch(`/api/seed?${params.toString()}`);
             const data = await res.json();
 
             if (res.ok) {
-                toast.success('Seed realizado com sucesso!');
-                // refresh pending if needed
+                toast.success(`Sucesso! ${data.count} livros gerados.`);
                 fetchPendingBooks();
             } else {
-                toast.error('Erro ao realizar seed');
+                toast.error(data.error || 'Erro ao realizar seed');
             }
         } catch (e) {
             toast.error('Erro de conexão');
@@ -251,15 +263,62 @@ export default function AdminPage() {
                         <h3 className="font-semibold text-ink mb-4">Gerar Dados de Teste</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-ink mb-1">Tópico / Gênero / Autor</label>
+                                <label className="block text-sm font-medium text-ink mb-1">Termo Geral</label>
                                 <input
                                     type="text"
                                     value={seedParams.query}
                                     onChange={(e) => setSeedParams({ ...seedParams, query: e.target.value })}
-                                    placeholder="Ex: Stephen King, Fantasia, Romance..."
+                                    placeholder="Ex: Fantasia, Harry Potter..."
                                     className="input w-full border border-stone-200 rounded-lg p-2"
                                 />
                             </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-ink mb-1">Autor</label>
+                                    <input
+                                        type="text"
+                                        value={seedParams.author}
+                                        onChange={(e) => setSeedParams({ ...seedParams, author: e.target.value })}
+                                        placeholder="Ex: Tolkien"
+                                        className="input w-full border border-stone-200 rounded-lg p-2"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-ink mb-1">Editora</label>
+                                    <input
+                                        type="text"
+                                        value={seedParams.publisher}
+                                        onChange={(e) => setSeedParams({ ...seedParams, publisher: e.target.value })}
+                                        placeholder="Ex: Rocco"
+                                        className="input w-full border border-stone-200 rounded-lg p-2"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-ink mb-1">Ano</label>
+                                    <input
+                                        type="text"
+                                        value={seedParams.year}
+                                        onChange={(e) => setSeedParams({ ...seedParams, year: e.target.value })}
+                                        placeholder="Ex: 2001"
+                                        className="input w-full border border-stone-200 rounded-lg p-2"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-ink mb-1">ISBN</label>
+                                    <input
+                                        type="text"
+                                        value={seedParams.isbn}
+                                        onChange={(e) => setSeedParams({ ...seedParams, isbn: e.target.value })}
+                                        placeholder="ISBN-13 ou 10"
+                                        className="input w-full border border-stone-200 rounded-lg p-2"
+                                    />
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-ink mb-1">Quantidade</label>
                                 <input
@@ -271,17 +330,27 @@ export default function AdminPage() {
                                     className="input w-full border border-stone-200 rounded-lg p-2"
                                 />
                             </div>
+
                             <Button
                                 onClick={handleSeed}
-                                disabled={seeding || !seedParams.query}
+                                disabled={seeding || (!seedParams.query && !seedParams.author && !seedParams.isbn)}
                                 className="w-full"
                             >
                                 {seeding ? 'Gerando...' : 'Iniciar Seed'}
                             </Button>
-                            <p className="text-xs text-fade mt-2">
-                                Nota: Isso irá buscar livros reais no Google Books e adicioná-los como 'Indie' para teste.
-                            </p>
                         </div>
+                    </div>
+
+                    <div className="card p-6 bg-stone-50 border-dashed border-2">
+                        <h3 className="font-semibold text-ink mb-2">Dica de uso</h3>
+                        <p className="text-sm text-fade mb-4">
+                            Combine os filtros para ser mais específico. A busca usa a API do Google Books.
+                        </p>
+                        <ul className="text-sm text-fade space-y-2 list-disc list-inside">
+                            <li>Para achar uma edição específica, use o <strong>ISBN</strong>.</li>
+                            <li>Para livros de uma editora específica, preencha o campo <strong>Editora</strong>.</li>
+                            <li>Se não encontrar nada, tente simplificar a busca (ex: tire o ano).</li>
+                        </ul>
                     </div>
                 </div>
             )}
