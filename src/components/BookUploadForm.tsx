@@ -102,8 +102,17 @@ export function BookUploadForm() {
 
             if (eaError) throw eaError;
 
+            // 5. Get Profile Username for redirect
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('username')
+                .eq('id', user.id)
+                .single();
+
+            const username = profile?.username || user.email?.split('@')[0] || 'user';
+
             // Success
-            router.push('/profile/' + user.user_metadata.username + '?tab=published');
+            router.push('/profile/' + username + '?tab=published');
 
         } catch (err: any) {
             console.error('Error publishing book:', err);
