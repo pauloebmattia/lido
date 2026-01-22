@@ -31,6 +31,12 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
     const [lists, setLists] = useState<any[]>([]);
     const [following, setFollowing] = useState<any[]>([]);
     const [totalPagesRead, setTotalPagesRead] = useState(0);
+    const [badges, setBadges] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isEditing, setIsEditing] = useState(false);
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [followLoading, setFollowLoading] = useState(false);
+    const [supabase] = useState(() => createClient());
 
     const searchParams = useSearchParams();
     const [activeTab, setActiveTab] = useState('books');
