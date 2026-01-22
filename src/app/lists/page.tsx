@@ -61,24 +61,38 @@ function ListsContent() {
                     .single();
                 setUser(profile);
 
-                // Fetch user's lists
-                const res = await fetch(`/api/lists?user_id=${authUser.id}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setLists(data.lists || []);
-                }
+                try {
+                    // Fetch user lists, followed lists, and popular lists in parallel
+                    const [listsRes, followedRes, popularRes] = await Promise.all([
+                        fetch(`/api/lists?user_id=${authUser.id}`),
+                        supabase
+                            .from('list_followers')
+                            .select('list:book_lists(*, list_items(count))')
+                            .eq('user_id', authUser.id),
+                        fetch('/api/lists/search?popular=true&limit=6')
+                    ]);
 
-                // Fetch followed lists
-                const { data: followedData } = await supabase
-                    .from('list_followers')
-                    .select('list:book_lists(*, list_items(count))')
-                    .eq('user_id', authUser.id);
+                    // Handle user's lists
+                    if (listsRes.ok) {
+                        const data = await listsRes.json();
+                        setLists(data.lists || []);
+                    }
 
-                if (followedData) {
-                    const fLists = followedData
-                        .filter((f: any) => f.list)
-                        .map((f: any) => f.list);
-                    setFollowedLists(fLists);
+                    // Handle followed lists
+                    if (followedRes.data) {
+                        const fLists = followedRes.data
+                            .filter((f: any) => f.list)
+                            .map((f: any) => f.list);
+                        setFollowedLists(fLists);
+                    }
+
+                    // Handle popular lists
+                    if (popularRes.ok) {
+                        const data = await popularRes.json();
+                        setPopularLists(data.lists || []);
+                    }
+                } catch (e) {
+                    console.error('Error fetching data:', e);
                 }
             }
 
