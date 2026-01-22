@@ -5,6 +5,8 @@ import { NavBar } from '@/components/NavBar';
 import { BookCard } from '@/components/BookCard';
 import { Tagline } from '@/components/Logo';
 import { DEFAULT_VIBES } from '@/components/VibeBadge';
+import { ImmersiveHero } from '@/components/ImmersiveHero';
+import { SocialTicker } from '@/components/SocialTicker';
 import type { Book } from '@/lib/supabase/types';
 
 export default async function HomePage() {
@@ -154,31 +156,13 @@ export default async function HomePage() {
       <NavBar user={user} />
 
       {/* Main Content */}
-      <main className="pt-20 pb-16 page-transition">
-        {/* Hero Section */}
-        <section className="hero-gradient">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-            <div className="text-center max-w-3xl mx-auto animate-fade-in">
-              <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight">
-                <span className="text-gradient">Descubra sua próxima</span>
-                <br />
-                <span className="text-accent">grande leitura</span>
-              </h1>
-              <Tagline className="mt-4 text-lg" />
+      <main className="min-h-screen page-transition">
 
-              <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/books" className="btn-ink btn-shimmer py-3 px-8 text-base">
-                  Explorar Livros
-                </Link>
-                {!user && (
-                  <Link href="/register" className="btn-ghost py-3 px-8 text-base">
-                    Criar Conta Grátis
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* Immersive Hero */}
+        <ImmersiveHero user={user} trendingBooks={trendingBooks} />
+
+        {/* Social Ticker (Client Component) */}
+        <SocialTicker />
 
         {/* Friends Activity Section */}
         {friendsBooks.length > 0 && (

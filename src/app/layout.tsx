@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
+import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+const fraunces = Fraunces({
+  variable: "--font-serif",
   subsets: ["latin"],
   display: "swap",
+  // Fraunces is a variable font, so we get optical sizing and weights automaticallly
 });
 
 const jakarta = Plus_Jakarta_Sans({
@@ -41,7 +42,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body
-        className={`${playfair.variable} ${jakarta.variable} font-sans antialiased bg-paper text-ink`}
+        className={`${fraunces.variable} ${jakarta.variable} font-sans antialiased bg-paper text-ink`}
       >
         {children}
         <Toaster richColors position="top-center" />
