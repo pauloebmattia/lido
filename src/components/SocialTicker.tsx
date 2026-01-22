@@ -73,10 +73,12 @@ export function SocialTicker({ initialActivities = [] }: SocialTickerProps) {
                         .select('title, user:profiles(username, display_name)')
                         .eq('id', payload.new.id)
                         .single();
-                    if (data) {
+
+                    if (data && data.user) {
+                        const user = Array.isArray(data.user) ? data.user[0] : data.user;
                         setActivity({
                             type: 'list',
-                            user: data.user.display_name || data.user.username,
+                            user: user.display_name || user.username,
                             action: 'criou a lista',
                             book: data.title,
                             detail: 'Confira!'
