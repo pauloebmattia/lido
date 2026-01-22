@@ -317,8 +317,8 @@ export function BookDetailClient({ id }: { id: string }) {
                                 </div>
                             )}
 
-                            {/* Admin Edit Cover (Quick Fix) */}
-                            {user && user.role === 'admin' && (
+                            {/* Author/Admin Edit Cover */}
+                            {user && (user.role === 'admin' || user.id === book.added_by) && (
                                 <button
                                     className="absolute top-2 right-2 bg-black/70 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black"
                                     onClick={async () => {
@@ -332,37 +332,43 @@ export function BookDetailClient({ id }: { id: string }) {
                                             if (!error) {
                                                 setBook({ ...book, cover_url: newUrl, cover_thumbnail: newUrl });
                                                 alert('Capa atualizada!');
+                                                router.refresh();
                                             } else {
                                                 alert('Erro ao atualizar capa.');
                                             }
                                         }
                                     }}
-                                    title="Trocar capa (Admin)"
+                                    title="Trocar capa"
                                 >
                                     <PenLine size={16} />
                                 </button>
                             )}
 
-                            {/* Full Admin Controls */}
-                            {user && user.role === 'admin' && (
+                            {/* Author/Admin Controls */}
+                            {user && (user.role === 'admin' || user.id === book.added_by) && (
                                 <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button
                                         className="bg-stone-900/90 text-white p-2 rounded-full hover:scale-110 transition-transform shadow-lg backdrop-blur-sm"
                                         onClick={() => setIsEditModalOpen(true)}
-                                        title="Editar Tudo (Admin)"
+                                        title="Editar Informações"
                                     >
                                         <Edit3 size={16} />
                                     </button>
                                     <button
                                         className="bg-red-600/90 text-white p-2 rounded-full hover:scale-110 transition-transform shadow-lg backdrop-blur-sm"
                                         onClick={async () => {
-                                            if (confirm('Tem certeza que deseja EXCLUIR este livro?')) {
+                                            if (confirm('Tem certeza que deseja EXCLUIR este livro? Esta ação não pode ser desfeita.')) {
                                                 const { error } = await supabase.from('books').delete().eq('id', book.id);
-                                                if (error) alert(error.message);
-                                                else router.push('/books');
+                                                if (error) {
+                                                    alert('Erro ao excluir: ' + error.message);
+                                                } else {
+                                                    alert('Livro excluído com sucesso!');
+                                                    router.push('/books');
+                                                    router.refresh();
+                                                }
                                             }
                                         }}
-                                        title="Excluir (Admin)"
+                                        title="Excluir Livro"
                                     >
                                         <Trash2 size={16} />
                                     </button>

@@ -167,6 +167,15 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                     .eq('follower_id', profileData.id);
                 if (userFollowing) setFollowing(userFollowing.map((f: any) => f.following));
 
+                // Fetch Published Books (Indie)
+                const { data: published } = await supabase
+                    .from('books')
+                    .select('*')
+                    .eq('added_by', profileData.id)
+                    .order('created_at', { ascending: false });
+
+                if (published) setPublishedBooks(published);
+
             }
 
             setLoading(false);
@@ -585,6 +594,29 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                                 <div className="col-span-full text-center py-12 text-fade">
                                     <Users size={48} className="mx-auto mb-4 opacity-50" />
                                     <p>Não está seguindo ninguém.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Published Tab */}
+                    {activeTab === 'published' && (
+                        <div>
+                            {publishedBooks.length > 0 ? (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    {publishedBooks.map((book) => (
+                                        <BookCard key={book.id} book={book} />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-12 text-fade">
+                                    <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
+                                    <p>Nenhum livro publicado ainda.</p>
+                                    {isOwnProfile && (
+                                        <Link href="/publish" className="text-accent hover:underline mt-2 inline-block">
+                                            Começar a publicar
+                                        </Link>
+                                    )}
                                 </div>
                             )}
                         </div>
