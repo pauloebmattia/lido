@@ -141,7 +141,10 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                         .eq('author_id', profileData.id)
                         .order('created_at', { ascending: false });
 
-                    if (pubBooks) setPublishedBooks(pubBooks);
+                    if (pubBooks) {
+                        const books = pubBooks.map((p: any) => p.book).filter(Boolean);
+                        setPublishedBooks(books);
+                    }
                 }
 
                 // Fetch Reviews
@@ -167,14 +170,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                     .eq('follower_id', profileData.id);
                 if (userFollowing) setFollowing(userFollowing.map((f: any) => f.following));
 
-                // Fetch Published Books (Indie)
-                const { data: published } = await supabase
-                    .from('books')
-                    .select('*')
-                    .eq('added_by', profileData.id)
-                    .order('created_at', { ascending: false });
 
-                if (published) setPublishedBooks(published);
 
             }
 
