@@ -1,46 +1,123 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Users, BookOpen, CheckCircle, Bookmark, XCircle, Star } from 'lucide-react';
+import { BookOpen, CheckCircle, Star, XCircle } from 'lucide-react';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/lib/supabase/types';
-
-interface FriendActivity {
-    status: string;
-    user: Profile;
-}
-
-interface FriendReview {
-    rating: number;
-    content: string;
-    user: Profile;
-}
 
 interface FriendsActivityProps {
     bookId: string;
 }
 
-const STATUS_LABELS: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-    'want-to-read': { label: 'quer ler', icon: Bookmark, color: 'text-blue-600' },
-    'reading': { label: 'está lendo', icon: BookOpen, color: 'text-amber-600' },
-    'read': { label: 'leu', icon: CheckCircle, color: 'text-green-600' },
-    'dnf': { label: 'abandonou', icon: XCircle, color: 'text-red-600' },
-};
+// Helper to format names: "Fulano", "Fulano e Cicrano", "Fulano, Cicrano e Beltrano", "X amigos"
+function formatNames(users: Profile[], actionVerb: string): string {
+    if (users.length === 0) return '';
+
+    const names = users.map(u => u.display_name || u.username);
+
+    if (names.length === 1) {
+        return `${names[0]} ${actionVerb}`;
+    } else if (names.length === 2) {
+        return `${names[0]} e ${names[1]} ${actionVerb}`;
+    } else if (names.length === 3) {
+        return `${names[0]}, ${names[1]} e ${names[2]} ${actionVerb}`;
+    } else {
+        return `${names.length} amigos ${actionVerb}`;
+    }
+}
+
+interface ActivityGroup {
+    icon: React.ReactNode;
+    text: string;
+}
 
 export function FriendsActivity({ bookId }: FriendsActivityProps) {
-    const [friends, setFriends] = useState<FriendActivity[]>([]);
-    const [reviews, setReviews] = useState<FriendReview[]>([]);
+    const [activities, setActivities] = useState<ActivityGroup[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function loadFriendsActivity() {
             try {
                 const res = await fetch(`/api/books/${bookId}/friends`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setFriends(data.friends || []);
-                    setReviews(data.reviews || []);
+                if (!res.ok) {
+                    setLoading(false);
+                    return;
                 }
+
+                const data = await res.json();
+                const friends = data.friends || [];
+                const reviews = data.reviews || [];
+
+                // Group users by status
+                const readUsers: Profile[] = [];
+                const readingUsers: Profile[] = [];
+                const dnfUsers: Profile[] = [];
+                const reviewedUsers: Profile[] = [];
+                const ratedUsers: Profile[] = [];
+
+                // Process reading status
+                friends.forEach((f: { status: string; user: Profile }) => {
+                    if (f.status === 'read') {
+                        readUsers.push(f.user);
+                    } else if (f.status === 'reading') {
+                        readingUsers.push(f.user);
+                    } else if (f.status === 'dnf') {
+                        dnfUsers.push(f.user);
+                    }
+                });
+
+                // Process reviews
+                reviews.forEach((r: { rating: number; content: string | null; user: Profile }) => {
+                    // Has content = reviewed
+                    if (r.content && r.content.trim().length > 0) {
+                        reviewedUsers.push(r.user);
+                    }
+                    // Has rating = rated
+                    if (r.rating > 0) {
+                        ratedUsers.push(r.user);
+                    }
+                });
+
+                // Build activity groups
+                const groups: ActivityGroup[] = [];
+
+                if (readUsers.length > 0) {
+                    groups.push({
+                        icon: <CheckCircle size={14} className="text-green-600" />,
+                        text: formatNames(readUsers, readUsers.length === 1 ? 'leu' : 'leram')
+                    });
+                }
+
+                if (readingUsers.length > 0) {
+                    groups.push({
+                        icon: <BookOpen size={14} className="text-amber-600" />,
+                        text: formatNames(readingUsers, readingUsers.length === 1 ? 'está lendo' : 'estão lendo')
+                    });
+                }
+
+                if (reviewedUsers.length > 0) {
+                    groups.push({
+                        icon: <span className="text-sm">✍️</span>,
+                        text: formatNames(reviewedUsers, reviewedUsers.length === 1 ? 'resenhou' : 'resenharam')
+                    });
+                }
+
+                if (ratedUsers.length > 0) {
+                    groups.push({
+                        icon: <Star size={14} className="text-amber-500 fill-amber-500" />,
+                        text: formatNames(ratedUsers, ratedUsers.length === 1 ? 'avaliou' : 'avaliaram')
+                    });
+                }
+
+                if (dnfUsers.length > 0) {
+                    groups.push({
+                        icon: <XCircle size={14} className="text-red-500" />,
+                        text: formatNames(dnfUsers, dnfUsers.length === 1 ? 'abandonou' : 'abandonaram')
+                    });
+                }
+
+                setActivities(groups);
             } catch (error) {
                 console.error('Failed to load friends activity:', error);
             } finally {
@@ -50,92 +127,18 @@ export function FriendsActivity({ bookId }: FriendsActivityProps) {
         loadFriendsActivity();
     }, [bookId]);
 
-    if (loading) {
-        return null; // Don't show anything while loading
-    }
-
-    if (friends.length === 0 && reviews.length === 0) {
-        return null; // Don't show section if no friends activity
+    if (loading || activities.length === 0) {
+        return null;
     }
 
     return (
-        <div className="card p-6 mt-6">
-            <h3 className="font-serif text-lg font-semibold text-ink flex items-center gap-2 mb-4">
-                <Users size={20} className="text-accent" />
-                Amigos neste livro
-            </h3>
-
-            {/* Friends Reading Status */}
-            {friends.length > 0 && (
-                <div className="space-y-3 mb-4">
-                    {friends.map((friend, idx) => {
-                        const statusInfo = STATUS_LABELS[friend.status];
-                        if (!statusInfo) return null;
-                        const Icon = statusInfo.icon;
-
-                        return (
-                            <div key={idx} className="flex items-center gap-3">
-                                <Link href={`/profile/${friend.user.username}`}>
-                                    <img
-                                        src={friend.user.avatar_url || '/default-avatar.png'}
-                                        alt={friend.user.display_name || friend.user.username}
-                                        className="w-8 h-8 rounded-full object-cover"
-                                    />
-                                </Link>
-                                <div className="flex-1 flex items-center gap-2">
-                                    <Link
-                                        href={`/profile/${friend.user.username}`}
-                                        className="font-medium text-ink hover:text-accent"
-                                    >
-                                        {friend.user.display_name || friend.user.username}
-                                    </Link>
-                                    <Icon size={14} className={statusInfo.color} />
-                                    <span className={`text-sm ${statusInfo.color}`}>
-                                        {statusInfo.label}
-                                    </span>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-
-            {/* Friends Reviews */}
-            {reviews.length > 0 && (
-                <div className="border-t border-stone-100 pt-4 mt-4">
-                    <p className="text-sm font-medium text-fade mb-3">Avaliações de amigos</p>
-                    <div className="space-y-3">
-                        {reviews.slice(0, 3).map((review, idx) => (
-                            <div key={idx} className="flex items-start gap-3">
-                                <Link href={`/profile/${review.user.username}`}>
-                                    <img
-                                        src={review.user.avatar_url || '/default-avatar.png'}
-                                        alt={review.user.display_name || review.user.username}
-                                        className="w-8 h-8 rounded-full object-cover"
-                                    />
-                                </Link>
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-2">
-                                        <Link
-                                            href={`/profile/${review.user.username}`}
-                                            className="font-medium text-ink hover:text-accent text-sm"
-                                        >
-                                            {review.user.display_name || review.user.username}
-                                        </Link>
-                                        <div className="flex items-center gap-1">
-                                            <Star size={12} className="text-amber-500 fill-amber-500" />
-                                            <span className="text-sm text-fade">{review.rating}</span>
-                                        </div>
-                                    </div>
-                                    {review.content && (
-                                        <p className="text-sm text-fade line-clamp-2 mt-1">{review.content}</p>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-fade py-3 border-t border-stone-200 mt-4">
+            {activities.map((activity, idx) => (
+                <span key={idx} className="flex items-center gap-1.5">
+                    {activity.icon}
+                    <span>{activity.text}</span>
+                </span>
+            ))}
         </div>
     );
 }
