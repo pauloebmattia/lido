@@ -189,7 +189,7 @@ export function ConnectionsList({ username, type }: ConnectionsListProps) {
                                     {!isMe && currentUser && (
                                         <Button
                                             size="sm"
-                                            variant={isFollowing ? 'ghost' : 'active'} // Active variant for follow? Or primary
+                                            variant={isFollowing ? 'ghost' : 'primary'} // Active variant for follow? Or primary
                                             className={isFollowing ? 'text-fade' : 'bg-ink text-white hover:bg-stone-800'}
                                             onClick={() => handleFollowToggle(conn.id)}
                                         >
