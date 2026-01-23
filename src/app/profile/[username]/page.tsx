@@ -18,9 +18,8 @@ const TABS = [
     { id: 'following', label: 'Seguindo', icon: Users },
 ];
 
-import { EditProfileModal } from '@/components/EditProfileModal';
-import { useSearchParams } from 'next/navigation';
-import { toggleFollow } from '@/app/actions';
+import { useRouter } from 'next/navigation';
+import { getFollowStatus, toggleFollow } from '@/app/actions';
 
 export default function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
     const { username } = use(params);
@@ -38,6 +37,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
     const [isFollowing, setIsFollowing] = useState(false);
     const [followLoading, setFollowLoading] = useState(false);
     const [supabase] = useState(() => createClient());
+    const router = useRouter();
 
     const searchParams = useSearchParams();
     const [activeTab, setActiveTab] = useState('books');
@@ -129,12 +129,8 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
 
                 // Check if current user is following this profile
                 if (authUser && authUser.id !== profileData.id) {
-                    // Optimized with no-cache to ensure fresh state
-                    const followRes = await fetch(`/api/follows?user_id=${profileData.id}`, { cache: 'no-store' });
-                    if (followRes.ok) {
-                        const followData = await followRes.json();
-                        setIsFollowing(followData.isFollowing);
-                    }
+                    const { isFollowing: status } = await getFollowStatus(profileData.id);
+                    setIsFollowing(status);
                 }
                 if (isOwnProfile || true) { // Always fetch published books (public profile)
                     const { data: pubBooks } = await supabase
@@ -312,8 +308,10 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
 
                                                     const result = await toggleFollow(profile.id, isFollowing);
                                                     if (!result.success) {
+                                                        alert(`Erro: ${result.error}`);
                                                         throw new Error(result.error);
                                                     }
+                                                    router.refresh();
                                                 } catch (e) {
                                                     // Revert on error
                                                     setIsFollowing(!isFollowing);
