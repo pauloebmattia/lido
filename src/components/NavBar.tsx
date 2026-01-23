@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, Menu, X, User, Bell, BookPlus, LogOut, Settings, Mail, List } from 'lucide-react';
+import { Search, Menu, X, User, Bell, BookPlus, LogOut, Settings, Mail, List, Users, UserCheck } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { SearchModal } from '@/components/SearchModal';
 import { Button } from '@/components/ui/Button';
