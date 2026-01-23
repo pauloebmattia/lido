@@ -17,7 +17,8 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'user_id is required' }, { status: 400 });
     }
 
-    const { data, error } = await supabase
+    const serviceClient = createServiceClient();
+    const { data, error } = await serviceClient
         .from('user_follows')
         .select('id')
         .eq('follower_id', user.id)
@@ -51,7 +52,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Cannot follow yourself' }, { status: 400 });
     }
 
-    const { error } = await supabase
+    const serviceClient = createServiceClient();
+    const { error } = await serviceClient
         .from('user_follows')
         .insert({
             follower_id: user.id,
@@ -84,7 +86,8 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ error: 'user_id is required' }, { status: 400 });
     }
 
-    const { error } = await supabase
+    const serviceClient = createServiceClient();
+    const { error } = await serviceClient
         .from('user_follows')
         .delete()
         .eq('follower_id', user.id)

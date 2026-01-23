@@ -13,67 +13,28 @@ type ConnectionType = 'followers' | 'following';
 interface ConnectionsListProps {
     username: string;
     type: ConnectionType;
+    initialProfile: Profile;
+    initialConnections: Profile[];
+    currentUser: Profile | null;
+    initialFollowingIds: string[];
 }
 
-export function ConnectionsList({ username, type }: ConnectionsListProps) {
-    const [profile, setProfile] = useState<Profile | null>(null);
-    const [currentUser, setCurrentUser] = useState<Profile | null>(null);
-    const [connections, setConnections] = useState<Profile[]>([]);
-    const [loading, setLoading] = useState(true);
+export function ConnectionsList({
+    username,
+    type,
+    initialProfile,
+    initialConnections,
+    currentUser,
+    initialFollowingIds
+}: ConnectionsListProps) {
+    const [connections] = useState<Profile[]>(initialConnections);
     const [searchQuery, setSearchQuery] = useState('');
-    const [supabase] = useState(() => createClient());
 
     // Track local follow state changes
-    const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
-
-    useEffect(() => {
-        async function loadData() {
-            setLoading(true);
-
-            // 1. Get Current User
-            const { data: { user: authUser } } = await supabase.auth.getUser();
-            if (authUser) {
-                const { data: curr } = await supabase.from('profiles').select('*').eq('id', authUser.id).single();
-                setCurrentUser(curr);
-
-                // Fetch who current user follows (to show follow/unfollow state correctly)
-                const { data: myFollows } = await supabase
-                    .from('user_follows')
-                    .select('following_id')
-                    .eq('follower_id', authUser.id);
-
-                if (myFollows) {
-                    setFollowingIds(new Set(myFollows.map(f => f.following_id)));
-                }
-            }
-
-            // 2. Get Target Profile
-            const { data: prof } = await supabase.from('profiles').select('*').eq('username', username).single();
-            setProfile(prof);
-
-            if (prof) {
-                // 3. Get Connections
-                if (type === 'followers') {
-                    const { data } = await supabase
-                        .from('user_follows')
-                        .select('follower:profiles!follower_id(*)')
-                        .eq('following_id', prof.id);
-                    if (data) setConnections(data.map((d: any) => d.follower));
-                } else {
-                    const { data } = await supabase
-                        .from('user_follows')
-                        .select('following:profiles!following_id(*)')
-                        .eq('follower_id', prof.id);
-                    if (data) setConnections(data.map((d: any) => d.following));
-                }
-            }
-            setLoading(false);
-        }
-        loadData();
-    }, [username, type, supabase]);
+    const [followingIds, setFollowingIds] = useState<Set<string>>(new Set(initialFollowingIds));
 
     const handleFollowToggle = async (targetId: string) => {
-        if (!currentUser) return; // Should redirect to login ideally
+        if (!currentUser) return;
 
         const isFollowing = followingIds.has(targetId);
 
@@ -99,7 +60,7 @@ export function ConnectionsList({ username, type }: ConnectionsListProps) {
             // Revert on error
             setFollowingIds(prev => {
                 const next = new Set(prev);
-                if (isFollowing) next.add(targetId); // Re-add if it was delete
+                if (isFollowing) next.add(targetId);
                 else next.delete(targetId); // Delete if it was add
                 return next;
             });
@@ -107,20 +68,12 @@ export function ConnectionsList({ username, type }: ConnectionsListProps) {
     };
 
     const filteredConnections = connections.filter(c =>
-        c.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.username.toLowerCase().includes(searchQuery.toLowerCase())
+        (c.display_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (c.username?.toLowerCase() || '').includes(searchQuery.toLowerCase())
     );
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-paper">
-                <NavBar user={currentUser} />
-                <div className="pt-32 text-center text-fade">Carregando...</div>
-            </div>
-        );
-    }
+    if (!initialProfile) return null; // Should treat 404 in parent
 
-    if (!profile) return null;
 
     return (
         <div className="min-h-screen bg-paper">
