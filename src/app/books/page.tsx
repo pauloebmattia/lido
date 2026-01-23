@@ -43,13 +43,20 @@ export default function BooksPage() {
 function BooksContent() {
     const searchParams = useSearchParams();
     const initialQuery = searchParams.get('query') || '';
+    const initialVibeSlug = searchParams.get('vibe');
 
     const [searchQuery, setSearchQuery] = useState(initialQuery);
     const [selectedCategory, setSelectedCategory] = useState('Todos');
-    const [selectedVibes, setSelectedVibes] = useState<number[]>([]);
+
+    // Initialize vibes from URL slug
+    const initialVibes = initialVibeSlug
+        ? DEFAULT_VIBES.filter(v => v.slug === initialVibeSlug).map(v => v.id)
+        : [];
+
+    const [selectedVibes, setSelectedVibes] = useState<number[]>(initialVibes);
     const [sortBy, setSortBy] = useState('popular');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-    const [showFilters, setShowFilters] = useState(false);
+    const [showFilters, setShowFilters] = useState(initialVibes.length > 0); // Open filters if vibe selected
 
     // Data states
     const [books, setBooks] = useState<Book[]>([]);

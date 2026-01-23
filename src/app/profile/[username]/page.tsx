@@ -329,9 +329,12 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                                                 <><UserPlus size={18} className="mr-2" />Seguir</>
                                             )}
                                         </Button>
-                                        <Button variant="ghost" size="sm">
-                                            Mensagem
-                                        </Button>
+                                        <Link href={`/messages?to=${profile.username}`}>
+                                            <Button variant="ghost" size="sm">
+                                                <MessageSquare size={18} className="mr-2" />
+                                                Mensagem
+                                            </Button>
+                                        </Link>
                                     </>
                                 ) : (
                                     <Link href="/login">
@@ -500,27 +503,29 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                         <div className="space-y-4">
                             {reviews.length > 0 ? (
                                 reviews.map((review) => (
-                                    <div key={review.id} className="card p-4">
-                                        <div className="flex gap-4">
-                                            <div className="w-16 h-24 flex-shrink-0 bg-stone-200 rounded-md overflow-hidden">
-                                                <img src={review.book.cover_url || '/images/default-cover.png'} alt={review.book.title} className="w-full h-full object-cover" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <div className="flex items-start justify-between">
-                                                    <div>
-                                                        <h3 className="font-medium text-ink">{review.book.title}</h3>
-                                                        <div className="flex items-center gap-1 mt-1">
-                                                            {[...Array(5)].map((_, i) => (
-                                                                <Star key={i} size={14} className={i < review.rating ? "text-yellow-500 fill-yellow-500" : "text-stone-300"} />
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                    <span className="text-xs text-fade">{new Date(review.created_at).toLocaleDateString()}</span>
+                                    <Link key={review.id} href={`/books/${review.book.id}`} className="block">
+                                        <div className="card p-4 hover:shadow-md transition-shadow cursor-pointer">
+                                            <div className="flex gap-4">
+                                                <div className="w-16 h-24 flex-shrink-0 bg-stone-200 rounded-md overflow-hidden">
+                                                    <img src={review.book.cover_url || '/images/default-cover.png'} alt={review.book.title} className="w-full h-full object-cover" />
                                                 </div>
-                                                <p className="mt-2 text-sm text-fade line-clamp-2">{review.content}</p>
+                                                <div className="flex-1">
+                                                    <div className="flex items-start justify-between">
+                                                        <div>
+                                                            <h3 className="font-medium text-ink group-hover:text-accent">{review.book.title}</h3>
+                                                            <div className="flex items-center gap-1 mt-1">
+                                                                {[...Array(5)].map((_, i) => (
+                                                                    <Star key={i} size={14} className={i < review.rating ? "text-yellow-500 fill-yellow-500" : "text-stone-300"} />
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                        <span className="text-xs text-fade">{new Date(review.created_at).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <p className="mt-2 text-sm text-fade line-clamp-2">{review.content}</p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </Link>
                                 ))
                             ) : (
                                 <div className="text-center py-12 text-fade">

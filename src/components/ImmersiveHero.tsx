@@ -26,11 +26,11 @@ export function ImmersiveHero({ user, trendingBooks }: ImmersiveHeroProps) {
     // Decorate basic vibe tags for floating effect
     // We hardcode some popular vibes for the hero
     const HERO_VIBES = [
-        { id: 'v1', name: 'Plot Twist', color: 'vibe-plottwist', emoji: '🎭' },
-        { id: 'v2', name: 'Choro Livre', color: 'vibe-choro', emoji: '😭' },
-        { id: 'v3', name: 'Sombrio', color: 'vibe-sombrio', emoji: '🌑' },
-        { id: 'v4', name: 'Inspirador', color: 'vibe-inspirador', emoji: '✨' },
-        { id: 'v5', name: 'Épico', color: 'vibe-epico', emoji: '👑' },
+        { id: 'v1', name: 'Plot Twist', color: 'vibe-plottwist', emoji: '🎭', slug: 'plottwist' },
+        { id: 'v2', name: 'Choro Livre', color: 'vibe-choro', emoji: '😭', slug: 'choro' },
+        { id: 'v3', name: 'Sombrio', color: 'vibe-sombrio', emoji: '🌑', slug: 'sombrio' },
+        { id: 'v4', name: 'Inspirador', color: 'vibe-inspirador', emoji: '✨', slug: 'inspirador' },
+        { id: 'v5', name: 'Épico', color: 'vibe-epico', emoji: '👑', slug: 'epico' },
     ];
 
     return (
@@ -73,9 +73,13 @@ export function ImmersiveHero({ user, trendingBooks }: ImmersiveHeroProps) {
                 {/* Floating Vibes (Centralized) */}
                 <div className="flex flex-wrap justify-center gap-3 mb-8 opacity-90">
                     {HERO_VIBES.map((vibe, i) => (
-                        <div key={vibe.id} className={i % 2 === 0 ? 'animate-float' : 'animate-float-delayed'}>
+                        <Link
+                            key={vibe.id}
+                            href={`/books?vibe=${vibe.slug}`}
+                            className={`${i % 2 === 0 ? 'animate-float' : 'animate-float-delayed'} hover:scale-110 transition-transform`}
+                        >
                             <VibeBadge vibe={vibe as any} size="md" />
-                        </div>
+                        </Link>
                     ))}
                 </div>
 
