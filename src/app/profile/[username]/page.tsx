@@ -256,14 +256,14 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                                         <span className="font-bold text-ink text-lg">{profile.reviews_count}</span>
                                         <span className="text-fade ml-1">reviews</span>
                                     </div>
-                                    <div className="text-center sm:text-left">
+                                    <Link href={`/profile/${profile.username}/followers`} className="text-center sm:text-left hover:opacity-80 transition-opacity">
                                         <span className="font-bold text-ink text-lg">{profile.followers_count.toLocaleString()}</span>
                                         <span className="text-fade ml-1">seguidores</span>
-                                    </div>
-                                    <div className="text-center sm:text-left">
+                                    </Link>
+                                    <Link href={`/profile/${profile.username}/following`} className="text-center sm:text-left hover:opacity-80 transition-opacity">
                                         <span className="font-bold text-ink text-lg">{profile.following_count}</span>
                                         <span className="text-fade ml-1">seguindo</span>
-                                    </div>
+                                    </Link>
                                 </div>
 
                                 {/* Level Progress */}

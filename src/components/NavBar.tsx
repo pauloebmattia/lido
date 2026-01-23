@@ -205,6 +205,24 @@ export function NavBar({ user }: NavBarProps) {
                                                         <span className="text-sm">Meu Perfil</span>
                                                     </Link>
 
+                                                    <Link
+                                                        href={`/profile/${user.username}/following`}
+                                                        className="flex items-center gap-2 px-4 py-2 text-sm text-ink hover:bg-stone-50 transition-colors"
+                                                        onClick={() => setProfileOpen(false)}
+                                                    >
+                                                        <Users size={16} className="text-fade" />
+                                                        <span className="text-sm">Quem sigo</span>
+                                                    </Link>
+
+                                                    <Link
+                                                        href={`/profile/${user.username}/followers`}
+                                                        className="flex items-center gap-2 px-4 py-2 text-sm text-ink hover:bg-stone-50 transition-colors"
+                                                        onClick={() => setProfileOpen(false)}
+                                                    >
+                                                        <UserCheck size={16} className="text-fade" />
+                                                        <span className="text-sm">Seguidores</span>
+                                                    </Link>
+
                                                     <button
                                                         onClick={handleLogout}
                                                         className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"

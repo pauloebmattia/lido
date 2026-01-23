@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Send, ArrowLeft, Loader2, MessageSquare, Search } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { NavBar } from '@/components/NavBar';
 import { Button } from '@/components/ui/Button';
 import { createClient } from '@/lib/supabase/client';
@@ -34,6 +35,9 @@ export default function MessagesPage() {
     const [supabase] = useState(() => createClient());
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    const searchParams = useSearchParams();
+    const toUsername = searchParams.get('to');
+
     useEffect(() => {
         async function loadData() {
             setLoading(true);
@@ -49,15 +53,44 @@ export default function MessagesPage() {
 
                 // Load conversations
                 const res = await fetch('/api/messages');
+                let userConversations: Conversation[] = [];
                 if (res.ok) {
                     const data = await res.json();
-                    setConversations(data.conversations || []);
+                    userConversations = data.conversations || [];
+                    setConversations(userConversations);
+                }
+
+                // Handle "to" param (New conversation)
+                if (toUsername) {
+                    // Check if conversation already exists
+                    const existing = userConversations.find(c => c.otherUser.username === toUsername);
+                    if (existing) {
+                        loadMessages(existing);
+                    } else {
+                        // Fetch recipient profile to create temporary conversation state
+                        const { data: recipient } = await supabase
+                            .from('profiles')
+                            .select('*')
+                            .eq('username', toUsername)
+                            .single();
+
+                        if (recipient) {
+                            const newConv: Conversation = {
+                                id: 'new',
+                                otherUser: recipient,
+                                lastMessage: null,
+                                unreadCount: 0
+                            };
+                            setSelectedConversation(newConv);
+                            setMessages([]); // Empty messages for new chat
+                        }
+                    }
                 }
             }
             setLoading(false);
         }
         loadData();
-    }, [supabase]);
+    }, [supabase, toUsername]);
 
     const loadMessages = async (conversation: Conversation) => {
         setSelectedConversation(conversation);
@@ -227,8 +260,8 @@ export default function MessagesPage() {
                                             >
                                                 <div
                                                     className={`max-w-[70%] px-4 py-2 rounded-2xl ${isOwn
-                                                            ? 'bg-accent text-white rounded-br-sm'
-                                                            : 'bg-white text-ink rounded-bl-sm shadow-sm'
+                                                        ? 'bg-accent text-white rounded-br-sm'
+                                                        : 'bg-white text-ink rounded-bl-sm shadow-sm'
                                                         }`}
                                                 >
                                                     <p>{msg.content}</p>
