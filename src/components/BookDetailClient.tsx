@@ -105,7 +105,7 @@ export function BookDetailClient({ id }: { id: string }) {
                 // Fetch friends who interacted with this book
                 // 1. Get IDs of people I follow
                 const { data: myFollows } = await supabase
-                    .from('follows')
+                    .from('user_follows')
                     .select('following_id')
                     .eq('follower_id', authUser.id);
 

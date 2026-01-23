@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     }
 
     const { data, error } = await supabase
-        .from('follows')
+        .from('user_follows')
         .select('id')
         .eq('follower_id', user.id)
         .eq('following_id', targetUserId)
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     }
 
     const { error } = await supabase
-        .from('follows')
+        .from('user_follows')
         .insert({
             follower_id: user.id,
             following_id: targetUserId,
@@ -85,7 +85,7 @@ export async function DELETE(request: Request) {
     }
 
     const { error } = await supabase
-        .from('follows')
+        .from('user_follows')
         .delete()
         .eq('follower_id', user.id)
         .eq('following_id', targetUserId);

@@ -20,6 +20,7 @@ const TABS = [
 
 import { EditProfileModal } from '@/components/EditProfileModal';
 import { useSearchParams } from 'next/navigation';
+import { toggleFollow } from '@/app/actions';
 
 export default function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
     const { username } = use(params);
@@ -167,7 +168,7 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                 // Fetch Following
                 // IMPORTANT: This list might still feel empty if API returns empty, but API is fixed now.
                 const { data: userFollowing } = await supabase
-                    .from('follows')
+                    .from('user_follows')
                     .select('following:profiles!following_id(*)')
                     .eq('follower_id', profileData.id);
                 if (userFollowing) setFollowing(userFollowing.map((f: any) => f.following));
@@ -309,19 +310,15 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
                                                     setIsFollowing(newStatus);
                                                     setProfile(p => p ? { ...p, followers_count: p.followers_count + (newStatus ? 1 : -1) } : p);
 
-                                                    if (isFollowing) {
-                                                        await fetch(`/api/follows?user_id=${profile.id}`, { method: 'DELETE' });
-                                                    } else {
-                                                        await fetch('/api/follows', {
-                                                            method: 'POST',
-                                                            headers: { 'Content-Type': 'application/json' },
-                                                            body: JSON.stringify({ user_id: profile.id })
-                                                        });
+                                                    const result = await toggleFollow(profile.id, isFollowing);
+                                                    if (!result.success) {
+                                                        throw new Error(result.error);
                                                     }
                                                 } catch (e) {
                                                     // Revert on error
                                                     setIsFollowing(!isFollowing);
                                                     setProfile(p => p ? { ...p, followers_count: p.followers_count + (isFollowing ? 1 : -1) } : p);
+                                                    console.error(e);
                                                 } finally {
                                                     setFollowLoading(false);
                                                 }
