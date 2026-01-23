@@ -613,17 +613,18 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
 
 
                 </section>
+            </main>
 
-                <EditProfileModal
-                    isOpen={isEditing}
-                    onClose={() => setIsEditing(false)}
-                    profile={profile}
-                    onProfileUpdate={(updated) => {
-                        setProfile(updated);
-                        // Also update currentUser if it's the same person (it is)
-                        setCurrentUser(updated);
-                    }}
-                />
+            <EditProfileModal
+                isOpen={isEditing}
+                onClose={() => setIsEditing(false)}
+                profile={profile}
+                onProfileUpdate={(updated) => {
+                    setProfile(updated);
+                    // Also update currentUser if it's the same person (it is)
+                    setCurrentUser(updated);
+                }}
+            />
         </div >
     );
 }
