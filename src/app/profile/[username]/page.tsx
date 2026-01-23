@@ -166,15 +166,8 @@ export default function ProfilePage({ params }: { params: Promise<{ username: st
 
                 // Fetch Following
                 // IMPORTANT: This list might still feel empty if API returns empty, but API is fixed now.
-                // However, fetching here uses CLIENT Supabase, which is subject to RLS.
-                // The Follow Lists PAGEs use Server Client.
-                // This "Following" tab might still be RLS blocked.
-                // BUT user complaint was about the BUTTON reverting.
-                // And the LISTS on separate pages. This specific tab is "Following".
-                // If RLS blocks 'user_follows' select for others, this will be empty.
-                // But let's fix the BUTTON first (priority).
                 const { data: userFollowing } = await supabase
-                    .from('user_follows')
+                    .from('follows')
                     .select('following:profiles!following_id(*)')
                     .eq('follower_id', profileData.id);
                 if (userFollowing) setFollowing(userFollowing.map((f: any) => f.following));

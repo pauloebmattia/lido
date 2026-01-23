@@ -18,7 +18,7 @@ export default async function FollowingPage({ params }: { params: Promise<{ user
         currentUser = curr;
 
         const { data: myFollows } = await serviceClient
-            .from('user_follows')
+            .from('follows')
             .select('following_id')
             .eq('follower_id', authUser.id);
 
@@ -40,7 +40,7 @@ export default async function FollowingPage({ params }: { params: Promise<{ user
 
     // 3. Get Following List (Bypassing RLS)
     const { data: connectionsData } = await serviceClient
-        .from('user_follows')
+        .from('follows')
         .select('following:profiles!following_id(*)')
         .eq('follower_id', profile.id);
 

@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 
     const serviceClient = createServiceClient();
     const { data, error } = await serviceClient
-        .from('user_follows')
+        .from('follows')
         .select('id')
         .eq('follower_id', user.id)
         .eq('following_id', targetUserId)
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
 
     const serviceClient = createServiceClient();
     const { error } = await serviceClient
-        .from('user_follows')
+        .from('follows')
         .insert({
             follower_id: user.id,
             following_id: targetUserId,
@@ -89,7 +89,7 @@ export async function DELETE(request: Request) {
 
     const serviceClient = createServiceClient();
     const { error } = await serviceClient
-        .from('user_follows')
+        .from('follows')
         .delete()
         .eq('follower_id', user.id)
         .eq('following_id', targetUserId);

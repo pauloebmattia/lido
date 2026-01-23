@@ -20,7 +20,7 @@ export default async function FollowersPage({ params }: { params: Promise<{ user
         // Fetch valid follows for current user (buttons state)
         // Using Service Client ensures we see them even if RLS is broken for "select own"
         const { data: myFollows } = await serviceClient
-            .from('user_follows')
+            .from('follows')
             .select('following_id')
             .eq('follower_id', authUser.id);
 
@@ -42,7 +42,7 @@ export default async function FollowersPage({ params }: { params: Promise<{ user
 
     // 3. Get Followers List (Bypassing RLS)
     const { data: connectionsData } = await serviceClient
-        .from('user_follows')
+        .from('follows')
         .select('follower:profiles!follower_id(*)')
         .eq('following_id', profile.id);
 
