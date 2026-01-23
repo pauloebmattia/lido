@@ -125,6 +125,33 @@ function MessagesContent() {
 
             if (res.ok) {
                 const data = await res.json();
+
+                // If this was a new conversation, we need to update the list and state
+                if (selectedConversation.id === 'new') {
+                    const realConvId = data.conversation_id;
+                    const newConvEntry: Conversation = {
+                        ...selectedConversation,
+                        id: realConvId,
+                        lastMessage: { content: newMessage, created_at: new Date().toISOString() },
+                        unreadCount: 0
+                    };
+
+                    // Update list
+                    setConversations(prev => [newConvEntry, ...prev]);
+                    // Update selected
+                    setSelectedConversation(newConvEntry);
+                } else {
+                    // Update existing conversation in list to move it to top
+                    setConversations(prev => {
+                        const others = prev.filter(c => c.id !== selectedConversation.id);
+                        const updated = {
+                            ...selectedConversation,
+                            lastMessage: { content: newMessage, created_at: new Date().toISOString() }
+                        };
+                        return [updated, ...others];
+                    });
+                }
+
                 setMessages([...messages, {
                     id: data.message.id,
                     content: newMessage,

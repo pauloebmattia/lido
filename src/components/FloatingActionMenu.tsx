@@ -11,8 +11,13 @@ export function FloatingActionMenu({ user, onAddBook }: { user?: Profile | null,
     const pathname = usePathname();
 
     // Hide on auth pages or if not logged in
+    // Hide on auth pages or if not logged in
     if (!user) return null;
-    if (pathname.startsWith('/login') || pathname.startsWith('/register')) return null;
+    const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register');
+    const isMessagesPage = pathname.startsWith('/messages');
+    const isProfilePage = pathname.startsWith('/profile');
+
+    if (isAuthPage || isMessagesPage || isProfilePage) return null;
 
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
