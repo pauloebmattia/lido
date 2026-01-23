@@ -2,19 +2,16 @@ import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
 // GET - Get friends' activity on a specific book
-export async function GET(request: Request) {
+export async function GET(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const { id: bookId } = await params;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
         return NextResponse.json({ friends: [] });
-    }
-
-    const { searchParams } = new URL(request.url);
-    const bookId = searchParams.get('book_id');
-
-    if (!bookId) {
-        return NextResponse.json({ error: 'book_id required' }, { status: 400 });
     }
 
     // Get list of people the user follows
