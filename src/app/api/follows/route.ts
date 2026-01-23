@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server';
-import { createServiceClient } from '@/lib/supabase/service';
 import { NextResponse } from 'next/server';
 
 // GET - Check if current user follows a specific user
@@ -18,8 +17,7 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'user_id is required' }, { status: 400 });
     }
 
-    const serviceClient = createServiceClient();
-    const { data, error } = await serviceClient
+    const { data, error } = await supabase
         .from('follows')
         .select('id')
         .eq('follower_id', user.id)
@@ -53,8 +51,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Cannot follow yourself' }, { status: 400 });
     }
 
-    const serviceClient = createServiceClient();
-    const { error } = await serviceClient
+    const { error } = await supabase
         .from('follows')
         .insert({
             follower_id: user.id,
@@ -87,8 +84,7 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ error: 'user_id is required' }, { status: 400 });
     }
 
-    const serviceClient = createServiceClient();
-    const { error } = await serviceClient
+    const { error } = await supabase
         .from('follows')
         .delete()
         .eq('follower_id', user.id)
