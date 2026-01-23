@@ -18,8 +18,9 @@ const TABS = [
     { id: 'following', label: 'Seguindo', icon: Users },
 ];
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getFollowStatus, toggleFollow } from '@/app/actions';
+import { EditProfileModal } from '@/components/EditProfileModal';
 
 export default function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
     const { username } = use(params);
