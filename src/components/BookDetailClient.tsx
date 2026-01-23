@@ -100,6 +100,43 @@ export function BookDetailClient({ id }: { id: string }) {
                     };
                     setCurrentStatus(statusMap[userBook.status] || null);
                 }
+
+                // --- FRIEND ACTIVITY LOGIC ---
+                // Fetch friends who interacted with this book
+                // 1. Get IDs of people I follow
+                const { data: myFollows } = await supabase
+                    .from('user_follows')
+                    .select('following_id')
+                    .eq('follower_id', authUser.id);
+
+                const followingIds = myFollows?.map(f => f.following_id) || [];
+
+                if (followingIds.length > 0) {
+                    // 2. Check their interactions (user_books)
+                    const { data: friendsBooks } = await supabase
+                        .from('user_books')
+                        .select('user_id, status, user:profiles(display_name, username, avatar_url)')
+                        .eq('book_id', id)
+                        .in('user_id', followingIds)
+                        .not('status', 'eq', 'want-to-read') // Only actual interactions (reading/read/dnf)
+                        .limit(5); // Fetch top 5 to show names
+
+                    // 3. Get total count
+                    const { count: friendsCount } = await supabase
+                        .from('user_books')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('book_id', id)
+                        .in('user_id', followingIds)
+                        .not('status', 'eq', 'want-to-read');
+
+                    if (friendsBooks && friendsBooks.length > 0) {
+                        setFriendActivity({
+                            interactors: friendsBooks.map((fb: any) => fb.user),
+                            count: friendsCount || friendsBooks.length,
+                            sampleStatus: friendsBooks[0].status // mostly for "read" vs "reading" context if needed
+                        });
+                    }
+                }
             }
 
             // 2. Fetch Book
@@ -146,6 +183,13 @@ export function BookDetailClient({ id }: { id: string }) {
 
         loadData();
     }, [id, supabase]);
+
+    // Friend Activity State
+    const [friendActivity, setFriendActivity] = useState<{
+        interactors: Profile[],
+        count: number,
+        sampleStatus: string
+    } | null>(null);
 
     // Handle adding book to list
     const handleAddToList = async (status: ReadingStatus | null) => {
@@ -478,6 +522,46 @@ export function BookDetailClient({ id }: { id: string }) {
                         </div>
                     </div>
                 </section>
+
+                {/* Friend Activity Banner */}
+                {friendActivity && friendActivity.count > 0 && (
+                    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+                        <div className="flex items-center gap-3 p-4 bg-stone-50 rounded-xl border border-stone-200 text-sm animate-fade-in shadow-sm">
+                            <div className="flex -space-x-2">
+                                {friendActivity.interactors.slice(0, 3).map((u, i) => (
+                                    <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-stone-200 overflow-hidden relative">
+                                        {u.avatar_url ? (
+                                            <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center bg-accent text-white font-bold text-xs">
+                                                {(u.display_name || u.username || '?')[0].toUpperCase()}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="text-ink">
+                                {friendActivity.count === 1 ? (
+                                    <span>
+                                        <strong>{friendActivity.interactors[0].display_name || friendActivity.interactors[0].username}</strong> leu/interagiu com este livro.
+                                    </span>
+                                ) : friendActivity.count === 2 ? (
+                                    <span>
+                                        <strong>{friendActivity.interactors[0].display_name || friendActivity.interactors[0].username}</strong> e <strong>{friendActivity.interactors[1].display_name || friendActivity.interactors[1].username}</strong> leram este livro.
+                                    </span>
+                                ) : friendActivity.count === 3 ? (
+                                    <span>
+                                        <strong>{friendActivity.interactors[0].display_name || friendActivity.interactors[0].username}</strong>, <strong>{friendActivity.interactors[1].display_name || friendActivity.interactors[1].username}</strong> e <strong>{friendActivity.interactors[2].display_name || friendActivity.interactors[2].username}</strong> leram este livro.
+                                    </span>
+                                ) : (
+                                    <span>
+                                        <strong>{friendActivity.interactors[0].display_name || friendActivity.interactors[0].username}</strong> e outros <strong>{friendActivity.count - 1} amigos</strong> leram este livro.
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </section>
+                )}
 
                 {/* Description */}
                 <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
