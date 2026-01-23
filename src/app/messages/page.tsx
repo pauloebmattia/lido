@@ -23,7 +23,7 @@ interface Message {
     sender: Profile;
 }
 
-export default function MessagesPage() {
+function MessagesContent() {
     const [user, setUser] = useState<Profile | null>(null);
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
@@ -311,5 +311,17 @@ export default function MessagesPage() {
                 </div>
             </main>
         </div>
+    );
+}
+
+export default function MessagesPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-paper flex items-center justify-center">
+                <Loader2 className="animate-spin text-fade" size={32} />
+            </div>
+        }>
+            <MessagesContent />
+        </Suspense>
     );
 }
