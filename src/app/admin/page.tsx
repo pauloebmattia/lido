@@ -51,6 +51,8 @@ export default function AdminPage() {
     // Edit modal state
     const [editingBook, setEditingBook] = useState<SearchResult | null>(null);
     const [editForm, setEditForm] = useState<SearchResult | null>(null);
+    const [authorsText, setAuthorsText] = useState('');
+    const [categoriesText, setCategoriesText] = useState('');
 
     const fetchPendingBooks = async () => {
         setIsLoading(true);
@@ -179,6 +181,8 @@ export default function AdminPage() {
     const handleEditBefore = (book: SearchResult) => {
         setEditingBook(book);
         setEditForm({ ...book });
+        setAuthorsText(book.authors?.join(', ') || '');
+        setCategoriesText(book.categories?.join(', ') || '');
     };
 
     // Import from edit modal
@@ -187,11 +191,18 @@ export default function AdminPage() {
 
         setImporting(editForm.google_books_id);
 
+        // Parse authors and categories from text fields
+        const dataToImport = {
+            ...editForm,
+            authors: authorsText.split(',').map(a => a.trim()).filter(Boolean),
+            categories: categoriesText.split(',').map(c => c.trim()).filter(Boolean),
+        };
+
         try {
             const res = await fetch('/api/books/import', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(editForm),
+                body: JSON.stringify(dataToImport),
             });
 
             const data = await res.json();
@@ -491,8 +502,8 @@ export default function AdminPage() {
                                 <label className="block text-sm font-medium text-ink mb-1">Autores (separados por vírgula)</label>
                                 <input
                                     type="text"
-                                    value={editForm.authors?.join(', ') || ''}
-                                    onChange={(e) => setEditForm({ ...editForm, authors: e.target.value.split(',').map(a => a.trim()).filter(Boolean) })}
+                                    value={authorsText}
+                                    onChange={(e) => setAuthorsText(e.target.value)}
                                     className="w-full border border-stone-200 rounded-lg px-3 py-2"
                                 />
                             </div>
@@ -558,8 +569,8 @@ export default function AdminPage() {
                                 <label className="block text-sm font-medium text-ink mb-1">Categorias (separadas por vírgula)</label>
                                 <input
                                     type="text"
-                                    value={editForm.categories?.join(', ') || ''}
-                                    onChange={(e) => setEditForm({ ...editForm, categories: e.target.value.split(',').map(c => c.trim()).filter(Boolean) })}
+                                    value={categoriesText}
+                                    onChange={(e) => setCategoriesText(e.target.value)}
                                     className="w-full border border-stone-200 rounded-lg px-3 py-2"
                                 />
                             </div>
