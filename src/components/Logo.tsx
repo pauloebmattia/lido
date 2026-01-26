@@ -21,7 +21,7 @@ export function Logo({ size = 'md', linkToHome = true }: LogoProps) {
         <span
             className={`
         font-serif font-bold tracking-widest
-        text-ink select-none
+        text-accent select-none
         ${sizes[size]}
       `}
         >

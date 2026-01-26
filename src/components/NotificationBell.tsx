@@ -127,12 +127,12 @@ export function NotificationBell() {
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 text-fade hover:text-ink transition-colors rounded-full hover:bg-stone-100"
+                className="relative p-2 text-white/70 hover:text-white transition-colors rounded-full hover:bg-white/10"
                 aria-label="Notificações"
             >
                 <Bell size={20} />
                 {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-paper animate-pulse" />
+                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-ink animate-pulse" />
                 )}
             </button>
 

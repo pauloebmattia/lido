@@ -80,7 +80,7 @@ export function NavBar({ user }: NavBarProps) {
 
     return (
         <>
-            <header className="fixed top-0 left-0 right-0 z-40 glass-nav border-b border-stone-200/50">
+            <header className="fixed top-0 left-0 right-0 z-40 bg-ink border-b border-ink">
                 <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         {/* Logo */}
@@ -88,11 +88,11 @@ export function NavBar({ user }: NavBarProps) {
 
                         {/* Desktop Navigation */}
                         <div className="hidden md:flex items-center gap-8">
-                            <Link href="/books" className="text-fade hover:text-ink transition-colors">
+                            <Link href="/books" className="text-white/70 hover:text-white transition-colors">
                                 Explorar
                             </Link>
                             {user && (
-                                <Link href="/my-books" className="text-fade hover:text-ink transition-colors">
+                                <Link href="/my-books" className="text-white/70 hover:text-white transition-colors">
                                     Meus Livros
                                 </Link>
                             )}
@@ -104,7 +104,7 @@ export function NavBar({ user }: NavBarProps) {
                             <div className="relative">
                                 <button
                                     onClick={() => setSearchOpen(!searchOpen)}
-                                    className="p-2 text-fade hover:text-ink transition-colors"
+                                    className="p-2 text-white/70 hover:text-white transition-colors"
                                     aria-label="Opções de Pesquisa"
                                 >
                                     <Search size={20} />
@@ -152,7 +152,7 @@ export function NavBar({ user }: NavBarProps) {
                             {user ? (
                                 <>
                                     {/* Messages Icon */}
-                                    <Link href="/messages" className="p-2 text-fade hover:text-ink transition-colors" aria-label="Mensagens">
+                                    <Link href="/messages" className="p-2 text-white/70 hover:text-white transition-colors" aria-label="Mensagens">
                                         <Mail size={20} />
                                     </Link>
 
@@ -251,7 +251,7 @@ export function NavBar({ user }: NavBarProps) {
                             {/* Mobile Menu Toggle */}
                             <button
                                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                className="md:hidden p-2 text-fade hover:text-ink transition-colors"
+                                className="md:hidden p-2 text-white/70 hover:text-white transition-colors"
                                 aria-label="Menu"
                             >
                                 {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -261,11 +261,11 @@ export function NavBar({ user }: NavBarProps) {
 
                     {/* Mobile Menu */}
                     {mobileMenuOpen && (
-                        <div className="md:hidden py-4 border-t border-stone-200/50">
+                        <div className="md:hidden py-4 border-t border-white/20">
                             <div className="flex flex-col gap-3">
                                 <Link
                                     href="/books"
-                                    className="px-4 py-2 text-fade hover:text-ink transition-colors"
+                                    className="px-4 py-2 text-white/70 hover:text-white transition-colors"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
                                     Explorar
@@ -274,14 +274,14 @@ export function NavBar({ user }: NavBarProps) {
                                     <>
                                         <Link
                                             href={`/profile/${user.username}`}
-                                            className="px-4 py-2 text-fade hover:text-ink transition-colors"
+                                            className="px-4 py-2 text-white/70 hover:text-white transition-colors"
                                             onClick={() => setMobileMenuOpen(false)}
                                         >
                                             Meu Perfil
                                         </Link>
                                         <Link
                                             href="/my-books"
-                                            className="px-4 py-2 text-fade hover:text-ink transition-colors"
+                                            className="px-4 py-2 text-white/70 hover:text-white transition-colors"
                                             onClick={() => setMobileMenuOpen(false)}
                                         >
                                             Meus Livros
