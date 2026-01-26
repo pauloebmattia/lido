@@ -464,8 +464,10 @@ export default function AdminPage() {
                                     )}
                                 </div>
                                 <div className="flex-1">
-                                    <label className="block text-sm font-medium text-ink mb-1">URL da Capa</label>
+                                    <label htmlFor="edit-cover-url" className="block text-sm font-medium text-ink mb-1">URL da Capa</label>
                                     <input
+                                        id="edit-cover-url"
+                                        name="cover_url"
                                         type="text"
                                         value={editForm.cover_url || ''}
                                         onChange={(e) => setEditForm({ ...editForm, cover_url: e.target.value, cover_thumbnail: e.target.value })}
@@ -477,8 +479,10 @@ export default function AdminPage() {
 
                             {/* Title */}
                             <div>
-                                <label className="block text-sm font-medium text-ink mb-1">Título *</label>
+                                <label htmlFor="edit-title" className="block text-sm font-medium text-ink mb-1">Título *</label>
                                 <input
+                                    id="edit-title"
+                                    name="title"
                                     type="text"
                                     value={editForm.title}
                                     onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
@@ -488,8 +492,10 @@ export default function AdminPage() {
 
                             {/* Subtitle */}
                             <div>
-                                <label className="block text-sm font-medium text-ink mb-1">Subtítulo</label>
+                                <label htmlFor="edit-subtitle" className="block text-sm font-medium text-ink mb-1">Subtítulo</label>
                                 <input
+                                    id="edit-subtitle"
+                                    name="subtitle"
                                     type="text"
                                     value={editForm.subtitle || ''}
                                     onChange={(e) => setEditForm({ ...editForm, subtitle: e.target.value })}
@@ -499,8 +505,10 @@ export default function AdminPage() {
 
                             {/* Authors */}
                             <div>
-                                <label className="block text-sm font-medium text-ink mb-1">Autores (separados por vírgula)</label>
+                                <label htmlFor="edit-authors" className="block text-sm font-medium text-ink mb-1">Autores (separados por vírgula)</label>
                                 <input
+                                    id="edit-authors"
+                                    name="authors"
                                     type="text"
                                     value={authorsText}
                                     onChange={(e) => setAuthorsText(e.target.value)}
@@ -511,8 +519,10 @@ export default function AdminPage() {
                             {/* Publisher & Date */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-ink mb-1">Editora</label>
+                                    <label htmlFor="edit-publisher" className="block text-sm font-medium text-ink mb-1">Editora</label>
                                     <input
+                                        id="edit-publisher"
+                                        name="publisher"
                                         type="text"
                                         value={editForm.publisher || ''}
                                         onChange={(e) => setEditForm({ ...editForm, publisher: e.target.value })}
@@ -520,8 +530,10 @@ export default function AdminPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-ink mb-1">Data de Publicação</label>
+                                    <label htmlFor="edit-published-date" className="block text-sm font-medium text-ink mb-1">Data de Publicação</label>
                                     <input
+                                        id="edit-published-date"
+                                        name="published_date"
                                         type="text"
                                         value={editForm.published_date || ''}
                                         onChange={(e) => setEditForm({ ...editForm, published_date: e.target.value })}
@@ -534,8 +546,10 @@ export default function AdminPage() {
                             {/* Page Count & ISBN */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-ink mb-1">Número de Páginas</label>
+                                    <label htmlFor="edit-page-count" className="block text-sm font-medium text-ink mb-1">Número de Páginas</label>
                                     <input
+                                        id="edit-page-count"
+                                        name="page_count"
                                         type="number"
                                         value={editForm.page_count || ''}
                                         onChange={(e) => setEditForm({ ...editForm, page_count: parseInt(e.target.value) || null })}
@@ -543,8 +557,10 @@ export default function AdminPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-ink mb-1">ISBN</label>
+                                    <label htmlFor="edit-isbn" className="block text-sm font-medium text-ink mb-1">ISBN</label>
                                     <input
+                                        id="edit-isbn"
+                                        name="isbn"
                                         type="text"
                                         value={editForm.isbn || ''}
                                         onChange={(e) => setEditForm({ ...editForm, isbn: e.target.value })}
@@ -555,8 +571,10 @@ export default function AdminPage() {
 
                             {/* Description */}
                             <div>
-                                <label className="block text-sm font-medium text-ink mb-1">Descrição</label>
+                                <label htmlFor="edit-description" className="block text-sm font-medium text-ink mb-1">Descrição</label>
                                 <textarea
+                                    id="edit-description"
+                                    name="description"
                                     value={editForm.description || ''}
                                     onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                                     rows={4}
@@ -566,8 +584,10 @@ export default function AdminPage() {
 
                             {/* Categories */}
                             <div>
-                                <label className="block text-sm font-medium text-ink mb-1">Categorias (separadas por vírgula)</label>
+                                <label htmlFor="edit-categories" className="block text-sm font-medium text-ink mb-1">Categorias (separadas por vírgula)</label>
                                 <input
+                                    id="edit-categories"
+                                    name="categories"
                                     type="text"
                                     value={categoriesText}
                                     onChange={(e) => setCategoriesText(e.target.value)}
