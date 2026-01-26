@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { AddToListModal, ReadingStatus } from '@/components/AddToListModal';
 import { ReviewForm } from '@/components/ReviewForm';
 import { EditBookModal } from '@/components/EditBookModal';
+import { ReviewCard } from '@/components/ReviewCard';
 import { createClient } from '@/lib/supabase/client';
 import { translateCategory } from '@/lib/utils';
 import type { Book, Profile, Vibe } from '@/lib/supabase/types';
@@ -597,78 +598,16 @@ export function BookDetailClient({ id }: { id: string }) {
                     {reviews.length > 0 ? (
                         <div className="space-y-6 stagger-children">
                             {reviews.map((review) => (
-                                <article key={review.id} className="card p-6">
-                                    <div className="flex items-start gap-4">
-                                        <div className="flex-shrink-0">
-                                            {review.user?.avatar_url ? (
-                                                <img src={review.user.avatar_url} alt={review.user.username} className="w-12 h-12 rounded-full object-cover" />
-                                            ) : (
-                                                <div className="w-12 h-12 rounded-full bg-ink text-paper flex items-center justify-center font-medium">
-                                                    {(review.user?.display_name || review.user?.username || 'U').charAt(0)}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex flex-wrap items-center gap-3 mb-2">
-                                                <Link
-                                                    href={`/profile/${review.user?.username}`}
-                                                    className="font-medium text-ink hover:text-accent transition-colors"
-                                                >
-                                                    {review.user?.display_name || review.user?.username}
-                                                </Link>
-                                                <RatingStars rating={review.rating} size={14} />
-                                                <span className="text-sm text-fade">
-                                                    {new Date(review.created_at).toLocaleDateString('pt-BR')}
-                                                </span>
-                                            </div>
-
-                                            {review.vibes && review.vibes.length > 0 && (
-                                                <div className="flex flex-wrap gap-1.5 mb-3">
-                                                    {review.vibes.map((vibe) => (
-                                                        <VibeBadge key={vibe.id} vibe={vibe} size="xs" />
-                                                    ))}
-                                                </div>
-                                            )}
-
-                                            <p className="text-fade leading-relaxed">{review.content}</p>
-
-                                            <div className="mt-4 flex items-center justify-between">
-                                                <div className="flex items-center gap-4 text-sm">
-                                                    <button className="text-fade hover:text-accent transition-colors flex items-center gap-1">
-                                                        ❤️ {review.likes_count > 0 && <span>{review.likes_count}</span>}
-                                                    </button>
-                                                    <button className="text-fade hover:text-accent transition-colors flex items-center gap-1">
-                                                        💬 {review.comments_count > 0 && <span>{review.comments_count}</span>}
-                                                    </button>
-                                                </div>
-
-                                                {/* Edit/Delete for own reviews */}
-                                                {user && review.user?.id === user.id && (
-                                                    <div className="flex items-center gap-2">
-                                                        <button
-                                                            onClick={() => {
-                                                                setEditingReview(review);
-                                                                setShowReviewForm(true);
-                                                            }}
-                                                            className="p-2 text-fade hover:text-accent transition-colors"
-                                                            title="Editar review"
-                                                        >
-                                                            <Edit3 size={16} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteReview(review.id)}
-                                                            className="p-2 text-fade hover:text-red-500 transition-colors"
-                                                            title="Excluir review"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </article>
+                                <ReviewCard
+                                    key={review.id}
+                                    review={review}
+                                    currentUserId={user?.id}
+                                    onEdit={() => {
+                                        setEditingReview(review);
+                                        setShowReviewForm(true);
+                                    }}
+                                    onDelete={() => handleDeleteReview(review.id)}
+                                />
                             ))}
                         </div>
                     ) : (
