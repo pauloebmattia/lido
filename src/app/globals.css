@@ -9,22 +9,22 @@
 
 /* Theme Variables - Tailwind 4 */
 @theme inline {
-  /* ===== Colors: Libris Paper & Ink (Warm Edition) ===== */
+  /* ===== Colors: Lido Dark Blue & Orange ===== */
   --color-paper: #FDFBF7;
-  /* "Sand" - Warmer Main background */
+  /* Light background */
   --color-surface: #F4F1DE;
-  /* "Cream" - Cards (was White) */
-  --color-ink: #292524;
-  /* Stone-800 - Softer Black */
-  --color-fade: #78716C;
-  /* Stone-500 */
+  /* "Cream" - Cards */
+  --color-ink: #002a40;
+  /* Dark Blue - Primary text/brand */
+  --color-fade: #5a7a8a;
+  /* Muted blue-gray secondary text */
 
-  --color-accent: #E07A5F;
-  /* "Terracotta" - Primary Brand */
-  --color-accent-light: #F2CC8F;
-  /* "Mustard" - Secondary/Hover */
-  --color-accent-dark: #C0563B;
-  /* Darker Terracotta */
+  --color-accent: #ff9100;
+  /* Orange - Highlights & CTAs */
+  --color-accent-light: #ffb347;
+  /* Light Orange - Hover states */
+  --color-accent-dark: #cc7400;
+  /* Dark Orange - Active states */
 
   /* Legacy/Support colors */
   --color-teal: #0F766E;
@@ -455,14 +455,14 @@ a.accent-link:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 145, 0, 0.4);
   transition: all 0.3s ease;
   cursor: pointer;
 }
 
 .fab:hover {
   transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(15, 118, 110, 0.5);
+  box-shadow: 0 6px 20px rgba(255, 145, 0, 0.5);
 }
 
 /* Hero gradient background */
@@ -482,7 +482,7 @@ a.accent-link:hover {
 /* Input focus glow */
 input:focus,
 textarea:focus {
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+  box-shadow: 0 0 0 3px rgba(255, 145, 0, 0.15);
 }
 
 /* Hide native search icons */
